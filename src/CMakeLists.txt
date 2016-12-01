@@ -6,6 +6,7 @@ set(LIBRARY "libcmark")
 set(STATICLIBRARY "libcmark_static")
 set(HEADERS
   cmark.h
+  cmark_extension_api.h
   parser.h
   buffer.h
   node.h
@@ -18,6 +19,9 @@ set(HEADERS
   houdini.h
   cmark_ctype.h
   render.h
+  registry.h
+  syntax_extension.h
+  plugin.h
   )
 set(LIBRARY_SOURCES
   cmark.c
@@ -41,6 +45,10 @@ set(LIBRARY_SOURCES
   houdini_html_u.c
   cmark_ctype.c
   arena.c
+  linked_list.c
+  syntax_extension.c
+  registry.c
+  plugin.c
   ${HEADERS}
   )
 
@@ -85,6 +93,8 @@ set(CMAKE_LINKER_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_PROFILE "${CMAKE_C_FLAGS_RELEASE} -pg")
 set(CMAKE_LINKER_PROFILE "${CMAKE_LINKER_FLAGS_RELEASE} -pg")
 
+add_definitions(-DLIBDIR=\"${CMAKE_BINARY_DIR}\")
+
 if (${CMAKE_VERSION} VERSION_GREATER "1.8")
   set(CMAKE_C_VISIBILITY_PRESET hidden)
   set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
@@ -113,6 +123,8 @@ else()
     VERSION ${PROJECT_VERSION})
 endif(MSVC)
 
+target_link_libraries(cmark ${CMAKE_DL_LIBS})
+
 set_property(TARGET ${LIBRARY}
   APPEND PROPERTY MACOSX_RPATH true)
 
@@ -138,6 +150,7 @@ install(TARGETS ${PROGRAM} ${LIBRARY} ${STATICLIBRARY}
 
 install(FILES
   cmark.h
+  cmark_extension_api.h
   ${CMAKE_CURRENT_BINARY_DIR}/cmark_export.h
   ${CMAKE_CURRENT_BINARY_DIR}/cmark_version.h
   DESTINATION include
