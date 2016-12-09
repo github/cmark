@@ -108,17 +108,17 @@ static void maybe_consume_pipe(cmark_node **n, int *offset) {
     ++(*offset);
 }
 
-static const char *find_unescaped_pipe(const char *cstr, size_t len) {
+static int find_unescaped_pipe(const cmark_chunk *chunk, int offset) {
   bool escaping = false;
-  for (; len; --len, ++cstr) {
+  for (; offset < chunk->len; ++offset) {
     if (escaping)
       escaping = false;
-    else if (*cstr == '\\')
+    else if (chunk->data[offset] == '\\')
       escaping = true;
-    else if (*cstr == '|')
-      return cstr;
+    else if (chunk->data[offset] == '|')
+      return offset;
   }
-  return NULL;
+  return -1;
 }
 
 static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
@@ -134,40 +134,43 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
       cmark_node *child = cmark_parser_add_child(
           parser, result, CMARK_NODE_TEXT, cmark_parser_get_offset(parser));
 
-      const char *cstr = cmark_chunk_to_cstr(parser->mem, &(*n)->as.literal);
-
       if (was_escape) {
         child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, 1);
         cmark_node_own(child);
         ++*offset;
+        if (*offset >= (*n)->as.literal.len) {
+          *offset = 0;
+          *n = (*n)->next;
+        }
         was_escape = false;
         continue;
       }
 
-      if (strcmp(cstr + *offset, "\\") == 0 && (*n)->next &&
+      if (strncmp((const char *)(*n)->as.literal.data + *offset,
+            "\\",
+            (*n)->as.literal.len - *offset) == 0 &&
+          (*n)->next &&
           (*n)->next->type == CMARK_NODE_TEXT) {
         was_escape = true;
         *n = (*n)->next;
         continue;
       }
 
-      const char *pipe =
-          find_unescaped_pipe(cstr + *offset, (*n)->as.literal.len - *offset);
-
-      if (!pipe) {
+      int pipe = find_unescaped_pipe(&(*n)->as.literal, *offset);
+      if (pipe == -1) {
         child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset,
                                             (*n)->as.literal.len - *offset);
         cmark_node_own(child);
       } else {
-        int len = (int)(pipe - cstr - *offset);
-        child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, len);
+        pipe -= *offset;
+        child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, pipe);
         cmark_node_own(child);
-        *offset += len + 1;
+        *offset += pipe + 1;
         if (*offset >= (*n)->as.literal.len) {
           *offset = 0;
           *n = (*n)->next;
         }
-        return result;
+        break;
       }
 
       *n = (*n)->next;
@@ -183,7 +186,19 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
 
   if (!result->first_child) {
     cmark_node_free(result);
-    result = NULL;
+    return NULL;
+  }
+
+  if (result->first_child->type == CMARK_NODE_TEXT) {
+    cmark_chunk c = cmark_chunk_ltrim_new(parser->mem, &result->first_child->as.literal);
+    cmark_chunk_free(parser->mem, &result->first_child->as.literal);
+    result->first_child->as.literal = c;
+  }
+
+  if (result->last_child->type == CMARK_NODE_TEXT) {
+    cmark_chunk c = cmark_chunk_rtrim_new(parser->mem, &result->last_child->as.literal);
+    cmark_chunk_free(parser->mem, &result->last_child->as.literal);
+    result->last_child->as.literal = c;
   }
 
   return result;
@@ -468,6 +483,7 @@ static void commonmark_render(cmark_syntax_extension *extension,
     }
   } else if (node->type == CMARK_NODE_TABLE_CELL) {
     if (entering) {
+      renderer->out(renderer, " ", false, LITERAL);
     } else {
       renderer->out(renderer, " |", false, LITERAL);
       if (((node_table_row *)node->parent->user_data)->is_header &&
@@ -505,6 +521,8 @@ static void latex_render(cmark_syntax_extension *extension,
     if (entering) {
       int i;
       uint16_t n_cols;
+      uint8_t *alignments = get_table_alignments(node);
+
       renderer->cr(renderer);
       renderer->out(renderer, "\\begin{table}", false, LITERAL);
       renderer->cr(renderer);
@@ -512,7 +530,12 @@ static void latex_render(cmark_syntax_extension *extension,
 
       n_cols = ((node_table *)node->user_data)->n_columns;
       for (i = 0; i < n_cols; i++) {
-        renderer->out(renderer, "l", false, LITERAL);
+        if (alignments[i] == ALIGN_NONE || alignments[i] == ALIGN_LEFT)
+          renderer->out(renderer, "l", false, LITERAL);
+        else if (alignments[i] == ALIGN_CENTER)
+          renderer->out(renderer, "c", false, LITERAL);
+        else if (alignments[i] == ALIGN_RIGHT)
+          renderer->out(renderer, "r", false, LITERAL);
       }
       renderer->out(renderer, "}", false, LITERAL);
       renderer->cr(renderer);
@@ -548,6 +571,8 @@ static void man_render(cmark_syntax_extension *extension,
     if (entering) {
       int i;
       uint16_t n_cols;
+      uint8_t *alignments = get_table_alignments(node);
+
       renderer->cr(renderer);
       renderer->out(renderer, ".TS", false, LITERAL);
       renderer->cr(renderer);
@@ -557,7 +582,12 @@ static void man_render(cmark_syntax_extension *extension,
       n_cols = ((node_table *)node->user_data)->n_columns;
 
       for (i = 0; i < n_cols; i++) {
-        renderer->out(renderer, "c", false, LITERAL);
+        if (alignments[i] == ALIGN_LEFT)
+          renderer->out(renderer, "l", false, LITERAL);
+        else if (alignments[i] == ALIGN_NONE || alignments[i] == ALIGN_CENTER)
+          renderer->out(renderer, "c", false, LITERAL);
+        else if (alignments[i] == ALIGN_RIGHT)
+          renderer->out(renderer, "r", false, LITERAL);
       }
 
       if (n_cols) {
