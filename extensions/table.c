@@ -109,65 +109,67 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
   bool was_escape = false;
 
   while (*n) {
-    if ((*n)->type == CMARK_NODE_TEXT) {
+    cmark_node *node = *n;
+
+    if (node->type == CMARK_NODE_TEXT) {
       cmark_node *child = cmark_parser_add_child(
           parser, result, CMARK_NODE_TEXT, cmark_parser_get_offset(parser));
 
       if (was_escape) {
-        child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, 1);
+        child->as.literal = cmark_chunk_dup(&node->as.literal, *offset, 1);
         cmark_node_own(child);
         if (child->as.literal.data[0] == '|')
           cmark_node_free(child->prev);
         ++*offset;
-        if (*offset >= (*n)->as.literal.len) {
+        if (*offset >= node->as.literal.len) {
           *offset = 0;
-          *n = (*n)->next;
+          *n = node->next;
         }
         was_escape = false;
         continue;
       }
 
-      if (strncmp((const char *)(*n)->as.literal.data + *offset,
-            "\\",
-            (*n)->as.literal.len - *offset) == 0 &&
-          (*n)->next &&
-          (*n)->next->type == CMARK_NODE_TEXT) {
-        child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, 1);
+      const char *lit = (char *)node->as.literal.data + *offset;
+      const int lit_len = node->as.literal.len - *offset;
+
+      if (lit_len == 1 && lit[0] == '\\' &&
+          node->next &&
+          node->next->type == CMARK_NODE_TEXT) {
+        child->as.literal = cmark_chunk_dup(&node->as.literal, *offset, 1);
         cmark_node_own(child);
         was_escape = true;
-        *n = (*n)->next;
+        *n = node->next;
         continue;
       }
 
-      int pipe = find_unescaped_pipe(&(*n)->as.literal, *offset);
+      int pipe = find_unescaped_pipe(&node->as.literal, *offset);
       if (pipe == -1) {
-
-        child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset,
-                                            (*n)->as.literal.len - *offset);
+        child->as.literal = cmark_chunk_dup(&node->as.literal, *offset,
+                                            node->as.literal.len - *offset);
         cmark_node_own(child);
       } else {
         pipe -= *offset;
 
         if (pipe) {
-          child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, pipe);
+          child->as.literal = cmark_chunk_dup(&node->as.literal, *offset, pipe);
           cmark_node_own(child);
         } else
           cmark_node_free(child);
 
         *offset += pipe + 1;
-        if (*offset >= (*n)->as.literal.len) {
+        if (*offset >= node->as.literal.len) {
           *offset = 0;
-          *n = (*n)->next;
+          *n = node->next;
         }
         break;
       }
 
-      *n = (*n)->next;
+      *n = node->next;
       *offset = 0;
     } else {
-      cmark_node *next = (*n)->next;
-      cmark_node_append_child(result, *n);
-      cmark_node_own(*n);
+      cmark_node *next = node->next;
+      cmark_node_append_child(result, node);
+      cmark_node_own(node);
       *n = next;
       *offset = 0;
     }
