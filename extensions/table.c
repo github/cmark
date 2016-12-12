@@ -194,7 +194,7 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
   return result;
 }
 
-static int ispunct(char c) {
+static int table_ispunct(char c) {
   return cmark_ispunct(c) && c != '|';
 }
 
@@ -208,7 +208,7 @@ static table_row *row_from_string(cmark_syntax_extension *self,
   cmark_strbuf_set(&temp_container->content, string, len);
 
   cmark_manage_extensions_special_characters(parser, true);
-  cmark_parser_set_backslash_ispunct_func(parser, ispunct);
+  cmark_parser_set_backslash_ispunct_func(parser, table_ispunct);
   cmark_parse_inlines(parser, temp_container, parser->refmap, parser->options);
   cmark_parser_set_backslash_ispunct_func(parser, NULL);
   cmark_manage_extensions_special_characters(parser, false);
