@@ -304,36 +304,57 @@ This shouldn't assert.
 ### Escaping
 
 ```````````````````````````````` example
-| a |
-| --- |
-| \\ |
-| \\\\ |
-| \_ |
-| \| |
-| \a |
+| a | b |
+| --- | --- |
+| \\ | `\\` |
+| \\\\ | `\\\\` |
+| \_ | `\_` |
+| \| | `\|` |
+| \a | `\a` |
+
+\\ `\\`
+
+\\\\ `\\\\`
+
+\_ `\_`
+
+\| `\|`
+
+\a `\a`
 .
 <table>
 <thead>
 <tr>
 <th>a</th>
+<th>b</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>\</td>
+<td><code>\\</code></td>
 </tr>
 <tr>
 <td>\\</td>
+<td><code>\\\\</code></td>
 </tr>
 <tr>
 <td>_</td>
+<td><code>\_</code></td>
 </tr>
 <tr>
 <td>|</td>
+<td><code>\|</code></td>
 </tr>
 <tr>
-<td>a</td>
+<td>\a</td>
+<td><code>\a</code></td>
 </tr></tbody></table>
+<p>\ <code>\\</code></p>
+<p>\\ <code>\\\\</code></p>
+<p>_ <code>\_</code></p>
+<p>| <code>\|</code></p>
+<p>\a <code>\a</code></p>
 ````````````````````````````````
 
 ### Embedded HTML
