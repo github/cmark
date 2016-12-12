@@ -20,13 +20,6 @@ typedef struct {
   uint8_t *alignments;
 } node_table;
 
-typedef enum {
-  ALIGN_NONE,
-  ALIGN_LEFT,
-  ALIGN_CENTER,
-  ALIGN_RIGHT
-} table_column_alignment;
-
 typedef struct { bool is_header; } node_table_row;
 
 static void free_node_table(cmark_mem *mem, void *ptr) {
@@ -310,11 +303,11 @@ static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
     cmark_strbuf_free(&strbuf);
 
     if (left && right)
-      alignments[i] = ALIGN_CENTER;
+      alignments[i] = 'c';
     else if (left)
-      alignments[i] = ALIGN_LEFT;
+      alignments[i] = 'l';
     else if (right)
-      alignments[i] = ALIGN_RIGHT;
+      alignments[i] = 'r';
   }
   set_table_alignments(parent_container, alignments);
 
@@ -497,14 +490,12 @@ static void commonmark_render(cmark_syntax_extension *extension,
         renderer->cr(renderer);
         renderer->out(renderer, "|", false, LITERAL);
         for (i = 0; i < n_cols; i++) {
-          if (alignments[i] == ALIGN_NONE)
-            renderer->out(renderer, " --- |", false, LITERAL);
-          else if (alignments[i] == ALIGN_LEFT)
-            renderer->out(renderer, " :-- |", false, LITERAL);
-          else if (alignments[i] == ALIGN_CENTER)
-            renderer->out(renderer, " :-: |", false, LITERAL);
-          else if (alignments[i] == ALIGN_RIGHT)
-            renderer->out(renderer, " --: |", false, LITERAL);
+          switch (alignments[i]) {
+          case 0:   renderer->out(renderer, " --- |", false, LITERAL); break;
+          case 'l': renderer->out(renderer, " :-- |", false, LITERAL); break;
+          case 'c': renderer->out(renderer, " :-: |", false, LITERAL); break;
+          case 'r': renderer->out(renderer, " --: |", false, LITERAL); break;
+          }
         }
         renderer->cr(renderer);
       }
@@ -532,12 +523,18 @@ static void latex_render(cmark_syntax_extension *extension,
 
       n_cols = ((node_table *)node->user_data)->n_columns;
       for (i = 0; i < n_cols; i++) {
-        if (alignments[i] == ALIGN_NONE || alignments[i] == ALIGN_LEFT)
+        switch(alignments[i]) {
+        case 0:
+        case 'l':
           renderer->out(renderer, "l", false, LITERAL);
-        else if (alignments[i] == ALIGN_CENTER)
+          break;
+        case 'c':
           renderer->out(renderer, "c", false, LITERAL);
-        else if (alignments[i] == ALIGN_RIGHT)
+          break;
+        case 'r':
           renderer->out(renderer, "r", false, LITERAL);
+          break;
+        }
       }
       renderer->out(renderer, "}", false, LITERAL);
       renderer->cr(renderer);
@@ -584,12 +581,18 @@ static void man_render(cmark_syntax_extension *extension,
       n_cols = ((node_table *)node->user_data)->n_columns;
 
       for (i = 0; i < n_cols; i++) {
-        if (alignments[i] == ALIGN_LEFT)
+        switch (alignments[i]) {
+        case 'l':
           renderer->out(renderer, "l", false, LITERAL);
-        else if (alignments[i] == ALIGN_NONE || alignments[i] == ALIGN_CENTER)
+          break;
+        case 0:
+        case 'c':
           renderer->out(renderer, "c", false, LITERAL);
-        else if (alignments[i] == ALIGN_RIGHT)
+          break;
+        case 'r':
           renderer->out(renderer, "r", false, LITERAL);
+          break;
+        }
       }
 
       if (n_cols) {
@@ -680,12 +683,11 @@ static void html_render(cmark_syntax_extension *extension,
         if (n == node)
           break;
 
-      if (alignments[i] == ALIGN_LEFT)
-        cmark_strbuf_puts(html, " align=\"left\"");
-      else if (alignments[i] == ALIGN_CENTER)
-        cmark_strbuf_puts(html, " align=\"center\"");
-      else if (alignments[i] == ALIGN_RIGHT)
-        cmark_strbuf_puts(html, " align=\"right\"");
+      switch (alignments[i]) {
+      case 'l': cmark_strbuf_puts(html, " align=\"left\""); break;
+      case 'c': cmark_strbuf_puts(html, " align=\"center\""); break;
+      case 'r': cmark_strbuf_puts(html, " align=\"right\""); break;
+      }
 
       cmark_html_render_sourcepos(node, html, options);
       cmark_strbuf_putc(html, '>');
