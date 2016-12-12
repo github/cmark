@@ -88,24 +88,10 @@ static void free_table_row(cmark_mem *mem, table_row *row) {
   mem->free(row);
 }
 
-static void reescape_pipes(cmark_strbuf *strbuf, cmark_mem *mem,
-                           unsigned char *string, bufsize_t len) {
-  bufsize_t r;
-
-  cmark_strbuf_init(mem, strbuf, len * 2);
-  for (r = 0; r < len; ++r) {
-    if (string[r] == '\\' && r + 1 < len &&
-        (string[r + 1] == '|' || string[r + 1] == '\\'))
-      cmark_strbuf_putc(strbuf, '\\');
-
-    cmark_strbuf_putc(strbuf, string[r]);
-  }
-}
-
 static void maybe_consume_pipe(cmark_node **n, int *offset) {
   if (*n && (*n)->type == CMARK_NODE_TEXT && *offset < (*n)->as.literal.len &&
       (*n)->as.literal.data[*offset] == '|')
-    ++(*offset);
+    ++*offset;
 }
 
 static int find_unescaped_pipe(const cmark_chunk *chunk, int offset) {
@@ -137,6 +123,8 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
       if (was_escape) {
         child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, 1);
         cmark_node_own(child);
+        if (child->as.literal.data[0] == '|')
+          cmark_node_free(child->prev);
         ++*offset;
         if (*offset >= (*n)->as.literal.len) {
           *offset = 0;
@@ -151,6 +139,8 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
             (*n)->as.literal.len - *offset) == 0 &&
           (*n)->next &&
           (*n)->next->type == CMARK_NODE_TEXT) {
+        child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, 1);
+        cmark_node_own(child);
         was_escape = true;
         *n = (*n)->next;
         continue;
@@ -158,13 +148,19 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
 
       int pipe = find_unescaped_pipe(&(*n)->as.literal, *offset);
       if (pipe == -1) {
+
         child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset,
                                             (*n)->as.literal.len - *offset);
         cmark_node_own(child);
       } else {
         pipe -= *offset;
-        child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, pipe);
-        cmark_node_own(child);
+
+        if (pipe) {
+          child->as.literal = cmark_chunk_dup(&(*n)->as.literal, *offset, pipe);
+          cmark_node_own(child);
+        } else
+          cmark_node_free(child);
+
         *offset += pipe + 1;
         if (*offset >= (*n)->as.literal.len) {
           *offset = 0;
@@ -201,7 +197,12 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
     result->last_child->as.literal = c;
   }
 
+  cmark_consolidate_text_nodes(result);
   return result;
+}
+
+static int ispunct(char c) {
+  return cmark_ispunct(c) && c != '|';
 }
 
 static table_row *row_from_string(cmark_syntax_extension *self,
@@ -211,10 +212,12 @@ static table_row *row_from_string(cmark_syntax_extension *self,
 
   cmark_node *temp_container =
       cmark_node_new_with_mem(CMARK_NODE_PARAGRAPH, parser->mem);
-  reescape_pipes(&temp_container->content, parser->mem, string, len);
+  cmark_strbuf_set(&temp_container->content, string, len);
 
   cmark_manage_extensions_special_characters(parser, true);
+  cmark_parser_set_backslash_ispunct_func(parser, ispunct);
   cmark_parse_inlines(parser, temp_container, parser->refmap, parser->options);
+  cmark_parser_set_backslash_ispunct_func(parser, NULL);
   cmark_manage_extensions_special_characters(parser, false);
 
   if (!temp_container->first_child) {
@@ -248,7 +251,7 @@ static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
                                             unsigned char *input, int len) {
   bufsize_t matched =
       scan_table_start(input, len, cmark_parser_get_first_nonspace(parser));
-  cmark_node *table_header, *child;
+  cmark_node *table_header;
   table_row *header_row = NULL;
   table_row *marker_row = NULL;
   const char *parent_string;
@@ -297,10 +300,9 @@ static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
 
     cmark_strbuf strbuf;
     cmark_strbuf_init(parser->mem, &strbuf, 0);
-    for (child = node->first_child; child; child = child->next) {
-      assert(child->type == CMARK_NODE_TEXT);
-      cmark_strbuf_put(&strbuf, child->as.literal.data, child->as.literal.len);
-    }
+    assert(node->first_child->type == CMARK_NODE_TEXT);
+    assert(node->first_child == node->last_child);
+    cmark_strbuf_put(&strbuf, node->first_child->as.literal.data, node->first_child->as.literal.len);
     cmark_strbuf_trim(&strbuf);
     char const *text = cmark_strbuf_cstr(&strbuf);
 
