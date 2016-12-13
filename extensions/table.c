@@ -18,13 +18,28 @@ typedef struct {
 typedef struct {
   uint16_t n_columns;
   uint8_t *alignments;
+  table_row *last_matched_row;
 } node_table;
 
 typedef struct { bool is_header; } node_table_row;
 
+static void free_table_cell(cmark_mem *mem, void *data) {
+  cmark_node_free((cmark_node *)data);
+}
+
+static void free_table_row(cmark_mem *mem, table_row *row) {
+  if (!row)
+    return;
+
+  cmark_llist_free_full(mem, row->cells, (cmark_free_func)free_table_cell);
+
+  mem->free(row);
+}
+
 static void free_node_table(cmark_mem *mem, void *ptr) {
   node_table *t = (node_table *)ptr;
   mem->free(t->alignments);
+  free_table_row(mem, t->last_matched_row);
   mem->free(t);
 }
 
@@ -66,19 +81,6 @@ static int is_table_header(cmark_node *node, int is_table_header) {
 
   ((node_table_row *)node->user_data)->is_header = (is_table_header != 0);
   return 1;
-}
-
-static void free_table_cell(cmark_mem *mem, void *data) {
-  cmark_node_free((cmark_node *)data);
-}
-
-static void free_table_row(cmark_mem *mem, table_row *row) {
-  if (!row)
-    return;
-
-  cmark_llist_free_full(mem, row->cells, (cmark_free_func)free_table_cell);
-
-  mem->free(row);
 }
 
 static void maybe_consume_pipe(cmark_node **n, int *offset) {
@@ -348,6 +350,7 @@ static cmark_node *try_opening_table_row(cmark_syntax_extension *self,
                                          cmark_node *parent_container,
                                          unsigned char *input, int len) {
   cmark_node *table_row_block;
+  node_table *nt;
   table_row *row;
 
   if (cmark_parser_is_blank(parser))
@@ -363,10 +366,14 @@ static cmark_node *try_opening_table_row(cmark_syntax_extension *self,
   cmark_node_set_user_data_free_func(table_row_block, free_node_table_row);
 
   /* We don't advance the offset here */
-
-  row = row_from_string(self, parser,
-                        input + cmark_parser_get_first_nonspace(parser),
-                        len - cmark_parser_get_first_nonspace(parser));
+  nt = (node_table *)parent_container->user_data;
+  if (nt->last_matched_row) {
+    row = nt->last_matched_row;
+    nt->last_matched_row = NULL;
+  } else
+    row = row_from_string(self, parser,
+                          input + cmark_parser_get_first_nonspace(parser),
+                          len - cmark_parser_get_first_nonspace(parser));
 
   {
     cmark_llist *tmp, *next;
@@ -416,14 +423,19 @@ static int matches(cmark_syntax_extension *self, cmark_parser *parser,
                    unsigned char *input, int len,
                    cmark_node *parent_container) {
   int res = 0;
+  node_table *nt;
 
   if (cmark_node_get_type(parent_container) == CMARK_NODE_TABLE) {
     table_row *new_row = row_from_string(
         self, parser, input + cmark_parser_get_first_nonspace(parser),
         len - cmark_parser_get_first_nonspace(parser));
-    if (new_row && new_row->n_columns)
+    if (new_row && new_row->n_columns) {
       res = 1;
-    free_table_row(parser->mem, new_row);
+      nt = (node_table *)parent_container->user_data;
+      free_table_row(parser->mem, nt->last_matched_row);
+      nt->last_matched_row = new_row;
+    } else
+      free_table_row(parser->mem, new_row);
   }
 
   return res;
