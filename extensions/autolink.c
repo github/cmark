@@ -147,6 +147,60 @@ static size_t check_domain(uint8_t *data, size_t size, int allow_short) {
   }
 }
 
+static size_t check_email(uint8_t *chunk_data, size_t chunk_len, int max_rewind, int *rewind_out) {
+  uint8_t *data = chunk_data + max_rewind;
+  size_t size = chunk_len - max_rewind,
+         link_end;
+  int rewind, nb = 0, np = 0, ns = 0;
+
+  for (rewind = 0; rewind < max_rewind; ++rewind) {
+    uint8_t c = data[-rewind - 1];
+
+    if (cmark_isalnum(c))
+      continue;
+
+    if (strchr(".+-_", c) != NULL)
+      continue;
+
+    if (c == '/')
+      ns++;
+
+    break;
+  }
+
+  if (rewind == 0 || ns > 0)
+    return 0;
+
+  for (link_end = 0; link_end < size; ++link_end) {
+    uint8_t c = data[link_end];
+
+    if (cmark_isalnum(c))
+      continue;
+
+    if (c == '@')
+      nb++;
+    else if (c == '.' && link_end < size - 1)
+      np++;
+    else if (c != '-' && c != '_')
+      break;
+  }
+
+  if (link_end < 2 || nb != 1 || np == 0 ||
+      (!cmark_isalpha(data[link_end - 1]) && data[link_end - 1] != '.'))
+    return 0;
+
+  link_end = autolink_delim(data, link_end);
+
+  if (link_end == 0)
+    return 0;
+
+  if (rewind_out)
+    *rewind_out = rewind;
+
+  return link_end;
+}
+
+
 static cmark_node *www_match(cmark_parser *parser, cmark_node *parent,
                              cmark_inline_parser *inline_parser) {
   cmark_chunk *chunk = cmark_inline_parser_get_chunk(inline_parser);
@@ -198,52 +252,11 @@ static cmark_node *email_match(cmark_parser *parser, cmark_node *parent,
                                cmark_inline_parser *inline_parser) {
   size_t link_end;
   int rewind;
-  int nb = 0, np = 0, ns = 0;
 
   cmark_chunk *chunk = cmark_inline_parser_get_chunk(inline_parser);
   int max_rewind = cmark_inline_parser_get_offset(inline_parser);
-  uint8_t *data = chunk->data + max_rewind;
-  size_t size = chunk->len - max_rewind;
 
-  for (rewind = 0; rewind < max_rewind; ++rewind) {
-    uint8_t c = data[-rewind - 1];
-
-    if (cmark_isalnum(c))
-      continue;
-
-    if (strchr(".+-_", c) != NULL)
-      continue;
-
-    if (c == '/')
-      ns++;
-
-    break;
-  }
-
-  if (rewind == 0 || ns > 0)
-    return 0;
-
-  for (link_end = 0; link_end < size; ++link_end) {
-    uint8_t c = data[link_end];
-
-    if (cmark_isalnum(c))
-      continue;
-
-    if (c == '@')
-      nb++;
-    else if (c == '.' && link_end < size - 1)
-      np++;
-    else if (c != '-' && c != '_')
-      break;
-  }
-
-  if (link_end < 2 || nb != 1 || np == 0 ||
-      (!cmark_isalpha(data[link_end - 1]) && data[link_end - 1] != '.'))
-    return 0;
-
-  link_end = autolink_delim(data, link_end);
-
-  if (link_end == 0)
+  if (!(link_end = check_email(chunk->data, chunk->len, max_rewind, &rewind)))
     return NULL;
 
   cmark_inline_parser_set_offset(inline_parser, (int)(max_rewind + link_end));
@@ -254,7 +267,7 @@ static cmark_node *email_match(cmark_parser *parser, cmark_node *parent,
   cmark_strbuf buf;
   cmark_strbuf_init(parser->mem, &buf, 10);
   cmark_strbuf_puts(&buf, "mailto:");
-  cmark_strbuf_put(&buf, data - rewind, (bufsize_t)(link_end + rewind));
+  cmark_strbuf_put(&buf, chunk->data + max_rewind - rewind, (bufsize_t)(link_end + rewind));
   node->as.link.url = cmark_chunk_buf_detach(&buf);
 
   cmark_node *text = cmark_node_new_with_mem(CMARK_NODE_TEXT, parser->mem);
@@ -339,11 +352,23 @@ static cmark_node *match(cmark_syntax_extension *ext, cmark_parser *parser,
   // inline was finished in inlines.c.
 }
 
+static int delim_scanner(cmark_syntax_extension *ext,
+                         cmark_chunk *chunk) {
+  for (bufsize_t i = 0; i < chunk->len; ++i) {
+    if (cmark_isspace(chunk->data[i]))
+      break;
+    if (chunk->data[i] == '@')
+      return !check_email(chunk->data, chunk->len, i, NULL);
+  }
+  return 1;
+}
+
 cmark_syntax_extension *create_autolink_extension(void) {
   cmark_syntax_extension *ext = cmark_syntax_extension_new("autolink");
   cmark_llist *special_chars = NULL;
 
   cmark_syntax_extension_set_match_inline_func(ext, match);
+  cmark_syntax_extension_set_delim_scanner_func(ext, delim_scanner);
 
   cmark_mem *mem = cmark_get_default_mem_allocator();
   special_chars = cmark_llist_append(mem, special_chars, (void *)':');

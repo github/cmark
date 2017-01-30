@@ -88,6 +88,10 @@ int cmark_parser_attach_syntax_extension(cmark_parser *parser,
     parser->inline_syntax_extensions = cmark_llist_append(
       parser->mem, parser->inline_syntax_extensions, extension);
   }
+  if (extension->delim_scanner) {
+    parser->delim_scanner_extensions = cmark_llist_append(
+      parser->mem, parser->delim_scanner_extensions, extension);
+  }
 
   return 1;
 }
@@ -103,6 +107,7 @@ static void cmark_parser_dispose(cmark_parser *parser) {
 static void cmark_parser_reset(cmark_parser *parser) {
   cmark_llist *saved_exts = parser->syntax_extensions;
   cmark_llist *saved_inline_exts = parser->inline_syntax_extensions;
+  cmark_llist *saved_delim_exts = parser->delim_scanner_extensions;
   int saved_options = parser->options;
   cmark_mem *saved_mem = parser->mem;
 
@@ -124,6 +129,7 @@ static void cmark_parser_reset(cmark_parser *parser) {
 
   parser->syntax_extensions = saved_exts;
   parser->inline_syntax_extensions = saved_inline_exts;
+  parser->delim_scanner_extensions = saved_delim_exts;
   parser->options = saved_options;
 }
 
@@ -147,6 +153,7 @@ void cmark_parser_free(cmark_parser *parser) {
   cmark_strbuf_free(&parser->linebuf);
   cmark_llist_free(parser->mem, parser->syntax_extensions);
   cmark_llist_free(parser->mem, parser->inline_syntax_extensions);
+  cmark_llist_free(parser->mem, parser->delim_scanner_extensions);
   mem->free(parser);
 }
 

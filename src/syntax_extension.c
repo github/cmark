@@ -56,6 +56,11 @@ void cmark_syntax_extension_set_inline_from_delim_func(cmark_syntax_extension *e
   extension->insert_inline_from_delim = func;
 }
 
+void cmark_syntax_extension_set_delim_scanner_func(cmark_syntax_extension *extension,
+                                                   cmark_delim_scanner_func func) {
+  extension->delim_scanner = func;
+}
+
 void cmark_syntax_extension_set_special_inline_chars(cmark_syntax_extension *extension,
                                                      cmark_llist *special_chars) {
   extension->special_inline_chars = special_chars;

@@ -416,11 +416,12 @@ static void push_bracket(subject *subj, bool image, cmark_node *inl_text) {
 }
 
 // Assumes the subject has a c at the current position.
-static cmark_node *handle_delim(subject *subj, unsigned char c, bool smart) {
+static cmark_node *handle_delim(cmark_parser *parser, subject *subj, unsigned char c, bool smart) {
   bufsize_t numdelims;
   cmark_node *inl_text;
   bool can_open, can_close;
-  cmark_chunk contents;
+  cmark_chunk contents, subj_here;
+  cmark_llist *tmp_ext;
 
   numdelims = scan_delims(subj, c, &can_open, &can_close);
 
@@ -434,6 +435,17 @@ static cmark_node *handle_delim(subject *subj, unsigned char c, bool smart) {
   }
 
   inl_text = make_str(subj->mem, contents);
+
+  subj_here.data = subj->input.data + subj->pos;
+  subj_here.len = subj->input.len - subj->pos;
+
+  for (tmp_ext = parser->delim_scanner_extensions; tmp_ext; tmp_ext = tmp_ext->next) {
+    cmark_syntax_extension *ext = (cmark_syntax_extension *) tmp_ext->data;
+    if (!ext->delim_scanner(ext, &subj_here)) {
+      can_open = can_close = false;
+      break;
+    }
+  }
 
   if ((can_open || can_close) && (!(c == '\'' || c == '"') || smart)) {
     push_delimiter(subj, c, can_open, can_close, inl_text);
@@ -1145,7 +1157,7 @@ static int parse_inline(cmark_parser *parser, subject *subj, cmark_node *parent,
   case '_':
   case '\'':
   case '"':
-    new_inl = handle_delim(subj, c, (options & CMARK_OPT_SMART) != 0);
+    new_inl = handle_delim(parser, subj, c, (options & CMARK_OPT_SMART) != 0);
     break;
   case '-':
     new_inl = handle_hyphen(subj, (options & CMARK_OPT_SMART) != 0);
@@ -1423,17 +1435,17 @@ int cmark_inline_parser_in_bracket(cmark_inline_parser *parser, int image) {
 }
 
 void cmark_node_unput(cmark_node *node, int n) {
-	node = node->last_child;
-	while (n > 0 && node && node->type == CMARK_NODE_TEXT) {
-		if (node->as.literal.len < n) {
-			n -= node->as.literal.len;
-			node->as.literal.len = 0;
-		} else {
-			node->as.literal.len -= n;
-			n = 0;
-		}
-		node = node->prev;
-	}
+  node = node->last_child;
+  while (n > 0 && node && node->type == CMARK_NODE_TEXT) {
+    if (node->as.literal.len < n) {
+      n -= node->as.literal.len;
+      node->as.literal.len = 0;
+    } else {
+      node->as.literal.len -= n;
+      n = 0;
+    }
+    node = node->prev;
+  }
 }
 
 delimiter *cmark_inline_parser_get_last_delimiter(cmark_inline_parser *parser) {

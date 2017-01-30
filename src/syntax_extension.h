@@ -9,6 +9,7 @@ struct cmark_syntax_extension {
   cmark_open_block_func           try_opening_block;
   cmark_match_inline_func         match_inline;
   cmark_inline_from_delim_func    insert_inline_from_delim;
+  cmark_delim_scanner_func        delim_scanner;
   cmark_llist                   * special_inline_chars;
   char                          * name;
   void                          * priv;
