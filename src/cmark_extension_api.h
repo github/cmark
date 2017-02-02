@@ -209,9 +209,6 @@ typedef delimiter *(*cmark_inline_from_delim_func)(cmark_syntax_extension *exten
                                            delimiter *opener,
                                            delimiter *closer);
 
-typedef int (*cmark_delim_scanner_func)(cmark_syntax_extension *extension,
-                                        cmark_chunk *chunk);
-
 /** Should return 'true' if 'input' can be contained in 'container',
  *  'false' otherwise.
  */
@@ -292,12 +289,6 @@ void cmark_syntax_extension_set_match_inline_func(cmark_syntax_extension *extens
 CMARK_EXPORT
 void cmark_syntax_extension_set_inline_from_delim_func(cmark_syntax_extension *extension,
                                                        cmark_inline_from_delim_func func);
-
-/** See the documentation for 'cmark_syntax_extension'
- */
-CMARK_EXPORT
-void cmark_syntax_extension_set_delim_scanner_func(cmark_syntax_extension *extension,
-                                                   cmark_delim_scanner_func func);
 
 /** See the documentation for 'cmark_syntax_extension'
  */
