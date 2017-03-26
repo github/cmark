@@ -178,6 +178,8 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
     return NULL;
   }
 
+  cmark_consolidate_text_nodes(result);
+
   if (result->first_child->type == CMARK_NODE_TEXT) {
     cmark_chunk c = cmark_chunk_ltrim_new(parser->mem, &result->first_child->as.literal);
     cmark_chunk_free(parser->mem, &result->first_child->as.literal);
@@ -190,7 +192,6 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
     result->last_child->as.literal = c;
   }
 
-  cmark_consolidate_text_nodes(result);
   return result;
 }
 
