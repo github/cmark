@@ -151,11 +151,8 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
       } else {
         pipe -= *offset;
 
-        if (pipe) {
-          child->as.literal = cmark_chunk_dup(&node->as.literal, *offset, pipe);
-          cmark_node_own(child);
-        } else
-          cmark_node_free(child);
+        child->as.literal = cmark_chunk_dup(&node->as.literal, *offset, pipe);
+        cmark_node_own(child);
 
         *offset += pipe + 1;
         if (*offset >= node->as.literal.len) {
