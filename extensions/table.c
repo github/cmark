@@ -247,6 +247,27 @@ static table_row *row_from_string(cmark_syntax_extension *self,
     row->cells = cmark_llist_append(parser->mem, row->cells, child);
   }
 
+  for (cmark_llist *it = row->cells; it; it = it->next) {
+    child = (cmark_node *)it->data;
+    unsigned char *src = string + child->start_column;
+    int len = child->end_column - child->start_column;
+    cmark_node_free(child);
+    it->data = child = cmark_node_new_with_mem(CMARK_NODE_TABLE_CELL, parser->mem);
+    cmark_node_set_syntax_extension(child, self);
+    cmark_strbuf_set(&child->content, src, len);
+    cmark_manage_extensions_special_characters(parser, true);
+    cmark_parser_set_backslash_ispunct_func(parser, table_ispunct);
+    cmark_parse_inlines(parser, child, parser->refmap, parser->options);
+    cmark_parser_set_backslash_ispunct_func(parser, NULL);
+    cmark_manage_extensions_special_characters(parser, false);
+
+    int noff = 0;
+    cmark_node *tchild = child->first_child;
+    cmark_node *nchild = consume_until_pipe_or_eol(self, parser, &tchild, &noff);
+    if (nchild)
+      it->data = child = nchild;
+  }
+
   cmark_node_free(temp_container);
 
   return row;
