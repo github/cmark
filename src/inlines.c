@@ -645,6 +645,8 @@ static delimiter *S_insert_emph(subject *subj, delimiter *opener,
   // create new emph or strong, and splice it in to our inlines
   // between the opener and closer
   emph = use_delims == 1 ? make_emph(subj->mem) : make_strong(subj->mem);
+  emph->start_column = opener_inl->start_column;
+  emph->end_column = closer_inl->end_column;
 
   tmp = opener_inl->next;
   while (tmp && tmp != closer_inl) {
@@ -1119,7 +1121,7 @@ static int parse_inline(cmark_parser *parser, subject *subj, cmark_node *parent,
   cmark_node *new_inl = NULL;
   cmark_chunk contents;
   unsigned char c;
-  bufsize_t endpos;
+  bufsize_t pos = subj->pos, endpos;
   c = peek_char(subj);
   if (c == 0) {
     return 0;
@@ -1189,6 +1191,8 @@ static int parse_inline(cmark_parser *parser, subject *subj, cmark_node *parent,
   }
   if (new_inl != NULL) {
     cmark_node_append_child(parent, new_inl);
+    new_inl->start_column = pos;
+    new_inl->end_column = subj->pos;
   }
 
   return 1;

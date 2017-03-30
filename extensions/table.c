@@ -105,10 +105,15 @@ static int find_unescaped_pipe(const cmark_chunk *chunk, int offset) {
 static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
                                              cmark_parser *parser,
                                              cmark_node **n, int *offset) {
+  if (!*n)
+    return NULL;
+
   cmark_node *result =
       cmark_node_new_with_mem(CMARK_NODE_TABLE_CELL, parser->mem);
   cmark_node_set_syntax_extension(result, self);
   bool was_escape = false;
+
+  result->start_column = (*n)->start_column + *offset;
 
   while (*n) {
     cmark_node *node = *n;
@@ -124,6 +129,8 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
 
     cmark_node *child = cmark_parser_add_child(
         parser, result, CMARK_NODE_TEXT, cmark_parser_get_offset(parser));
+    child->start_column = node->start_column + *offset;
+    child->end_column = node->end_column;
 
     if (was_escape) {
       child->as.literal = cmark_chunk_dup(&node->as.literal, *offset, 1);
@@ -160,6 +167,8 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
     } else {
       pipe -= *offset;
 
+      child->end_column = (*n)->start_column + *offset + pipe;
+
       child->as.literal = cmark_chunk_dup(&node->as.literal, *offset, pipe);
       cmark_node_own(child);
 
@@ -193,6 +202,8 @@ static cmark_node *consume_until_pipe_or_eol(cmark_syntax_extension *self,
     cmark_chunk_free(parser->mem, &result->last_child->as.literal);
     result->last_child->as.literal = c;
   }
+
+  result->end_column = result->last_child->end_column;
 
   return result;
 }
