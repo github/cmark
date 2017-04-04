@@ -82,7 +82,7 @@ static int set_table_alignments(cmark_node *node, uint8_t *alignments) {
 
 static cmark_strbuf *unescape_pipes(cmark_mem *mem, unsigned char *string, bufsize_t len)
 {
-  cmark_strbuf *res = (cmark_strbuf *)malloc(sizeof(cmark_strbuf));
+  cmark_strbuf *res = (cmark_strbuf *)mem->calloc(1, sizeof(cmark_strbuf));
   bufsize_t r, w;
 
   cmark_strbuf_init(mem, res, len + 1);
