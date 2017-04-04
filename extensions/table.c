@@ -133,7 +133,7 @@ static table_row *row_from_string(cmark_syntax_extension *self,
 
     if (!got_cell && cell_matched) {
       row->n_columns += 1;
-      cmark_strbuf *buf = parser->mem->calloc(1, sizeof(cmark_strbuf));;
+      cmark_strbuf *buf = (cmark_strbuf *)parser->mem->calloc(1, sizeof(cmark_strbuf));;
       cmark_strbuf_init(parser->mem, buf, 0);
       row->cells = cmark_llist_append(parser->mem, row->cells, buf);
     }
