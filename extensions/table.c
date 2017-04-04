@@ -28,7 +28,7 @@ typedef struct {
 
 static void free_table_cell(cmark_mem *mem, void *data) {
   cmark_strbuf_free((cmark_strbuf *)data);
-  free(data);
+  mem->free(data);
 }
 
 static void free_table_row(cmark_mem *mem, table_row *row) {
