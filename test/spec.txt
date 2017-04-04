@@ -3229,8 +3229,8 @@ spans (such as emphasis, code, etc.) will not break a cell:
 ```````````````````````````````` example table
 | f\|oo  |
 | ------ |
-| b `|` az |
-| b **|** im |
+| b `\|` az |
+| b **\|** im |
 .
 <table>
 <thead>

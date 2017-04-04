@@ -621,7 +621,11 @@ static void opaque_free(cmark_syntax_extension *self, cmark_mem *mem, cmark_node
 }
 
 static int escape(cmark_syntax_extension *self, cmark_node *node, int c) {
-  return c == '|';
+  return
+    node->type != CMARK_NODE_TABLE &&
+    node->type != CMARK_NODE_TABLE_ROW &&
+    node->type != CMARK_NODE_TABLE_CELL &&
+    c == '|';
 }
 
 cmark_syntax_extension *create_table_extension(void) {
