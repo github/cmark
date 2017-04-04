@@ -53,12 +53,22 @@ bufsize_t _scan_table_cell(const unsigned char *p)
 */
 }
 
+bufsize_t _scan_table_cell_end(const unsigned char *p)
+{
+  const unsigned char *marker = NULL;
+  const unsigned char *start = p;
+/*!re2c
+  [|] spacechar* newline? { return (bufsize_t)(p - start); }
+  .? { return 0; }
+*/
+}
+
 bufsize_t _scan_table_row_end(const unsigned char *p)
 {
   const unsigned char *marker = NULL;
   const unsigned char *start = p;
 /*!re2c
-  ([|] spacechar* newline? | spacechar* newline | [|]) { return (bufsize_t)(p - start); }
+  spacechar* newline { return (bufsize_t)(p - start); }
   .? { return 0; }
 */
 }

@@ -3273,13 +3273,15 @@ block-level structure:
 </blockquote>
 ````````````````````````````````
 
+There must be at least one pipe in a line for it to constitute a table row:
+
 ```````````````````````````````` example table
 | abc | def |
 | --- | --- |
 | bar | baz |
 bar
 
-bar
+bim
 .
 <table>
 <thead>
@@ -3292,12 +3294,9 @@ bar
 <tr>
 <td>bar</td>
 <td>baz</td>
-</tr>
-<tr>
-<td>bar</td>
-<td></td>
 </tr></tbody></table>
 <p>bar</p>
+<p>bim</p>
 ````````````````````````````````
 
 The header row must match the [delimiter row] in the number of cells.  If not,

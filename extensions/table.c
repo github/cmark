@@ -107,19 +107,20 @@ static table_row *row_from_string(cmark_syntax_extension *self,
   table_row *row = NULL;
   bufsize_t cell_matched = 0, got_cell;
   bufsize_t cell_offset = 0;
-  bool got_any_cell = false;
+  bool got_any_pipe = false;
 
   row = (table_row *)parser->mem->calloc(1, sizeof(table_row));
   row->n_columns = 0;
   row->cells = NULL;
 
-  if (len > 0 && string[0] == '|')
+  if (len > 0 && string[0] == '|') {
     ++cell_offset;
+    got_any_pipe = true;
+  }
 
   do {
     cell_matched = got_cell = scan_table_cell(string, len, cell_offset);
     if (cell_matched) {
-      got_any_cell = true;
       cmark_strbuf *cell_buf = unescape_pipes(parser->mem, string + cell_offset,
           cell_matched);
       cmark_strbuf_trim(cell_buf);
@@ -128,8 +129,11 @@ static table_row *row_from_string(cmark_syntax_extension *self,
       cell_offset += cell_matched;
     }
 
-    cell_matched = scan_table_row_end(string, len, cell_offset);
+    cell_matched = scan_table_cell_end(string, len, cell_offset);
     cell_offset += cell_matched;
+
+    if (cell_matched)
+      got_any_pipe = true;
 
     if (!got_cell && cell_matched) {
       row->n_columns += 1;
@@ -137,9 +141,14 @@ static table_row *row_from_string(cmark_syntax_extension *self,
       cmark_strbuf_init(parser->mem, buf, 0);
       row->cells = cmark_llist_append(parser->mem, row->cells, buf);
     }
+
+    if (!cell_matched) {
+      cell_matched = scan_table_row_end(string, len, cell_offset);
+      cell_offset += cell_matched;
+    }
   } while (cell_matched && cell_offset < len);
 
-  if (cell_offset != len || (!got_any_cell && row->n_columns < 2)) {
+  if (cell_offset != len || !got_any_pipe) {
     free_table_row(parser->mem, row);
     row = NULL;
   }

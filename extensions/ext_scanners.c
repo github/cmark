@@ -645,7 +645,7 @@ bufsize_t _scan_table_cell(const unsigned char *p) {
   }
 }
 
-bufsize_t _scan_table_row_end(const unsigned char *p) {
+bufsize_t _scan_table_cell_end(const unsigned char *p) {
   const unsigned char *marker = NULL;
   const unsigned char *start = p;
 
@@ -668,177 +668,274 @@ bufsize_t _scan_table_row_end(const unsigned char *p) {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0,
     };
     yych = *(marker = p);
-    if (yych <= 0x7F) {
-      if (yych <= '\r') {
-        if (yych <= '\t') {
-          if (yych <= 0x08)
-            goto yy66;
+    if (yych <= 0xDF) {
+      if (yych <= '{') {
+        if (yych != '\n')
           goto yy63;
-        } else {
-          if (yych <= '\n')
-            goto yy65;
-          if (yych <= '\f')
-            goto yy63;
-          goto yy64;
-        }
       } else {
-        if (yych <= ' ') {
-          if (yych <= 0x1F)
-            goto yy66;
+        if (yych <= '|')
+          goto yy61;
+        if (yych <= 0x7F)
           goto yy63;
-        } else {
-          if (yych == '|')
-            goto yy61;
-          goto yy66;
-        }
+        if (yych >= 0xC2)
+          goto yy64;
       }
     } else {
-      if (yych <= 0xED) {
-        if (yych <= 0xDF) {
-          if (yych >= 0xC2)
-            goto yy67;
-        } else {
-          if (yych <= 0xE0)
-            goto yy69;
-          if (yych <= 0xEC)
-            goto yy70;
-          goto yy74;
-        }
-      } else {
-        if (yych <= 0xF0) {
-          if (yych <= 0xEF)
-            goto yy70;
+      if (yych <= 0xEF) {
+        if (yych <= 0xE0)
+          goto yy66;
+        if (yych == 0xED)
           goto yy71;
-        } else {
-          if (yych <= 0xF3)
-            goto yy72;
-          if (yych <= 0xF4)
-            goto yy73;
-        }
+        goto yy67;
+      } else {
+        if (yych <= 0xF0)
+          goto yy68;
+        if (yych <= 0xF3)
+          goto yy69;
+        if (yych <= 0xF4)
+          goto yy70;
       }
     }
   yy60 : { return 0; }
   yy61:
     yyaccept = 1;
     yych = *(marker = ++p);
-    goto yy79;
+    goto yy73;
   yy62 : { return (bufsize_t)(p - start); }
   yy63:
-    yyaccept = 0;
-    yych = *(marker = ++p);
-    if (yych <= 0x08)
-      goto yy60;
-    if (yych <= '\r')
-      goto yy77;
-    if (yych == ' ')
-      goto yy77;
+    yych = *++p;
     goto yy60;
   yy64:
     yych = *++p;
-    if (yych != '\n')
-      goto yy60;
-  yy65:
-    yych = *++p;
-    goto yy62;
-  yy66:
-    yych = *++p;
-    goto yy60;
-  yy67:
-    yych = *++p;
     if (yych <= 0x7F)
-      goto yy68;
+      goto yy65;
     if (yych <= 0xBF)
-      goto yy66;
-  yy68:
+      goto yy63;
+  yy65:
     p = marker;
     if (yyaccept == 0) {
       goto yy60;
     } else {
       goto yy62;
     }
-  yy69:
+  yy66:
     yych = *++p;
     if (yych <= 0x9F)
-      goto yy68;
+      goto yy65;
+    if (yych <= 0xBF)
+      goto yy64;
+    goto yy65;
+  yy67:
+    yych = *++p;
+    if (yych <= 0x7F)
+      goto yy65;
+    if (yych <= 0xBF)
+      goto yy64;
+    goto yy65;
+  yy68:
+    yych = *++p;
+    if (yych <= 0x8F)
+      goto yy65;
     if (yych <= 0xBF)
       goto yy67;
-    goto yy68;
+    goto yy65;
+  yy69:
+    yych = *++p;
+    if (yych <= 0x7F)
+      goto yy65;
+    if (yych <= 0xBF)
+      goto yy67;
+    goto yy65;
   yy70:
     yych = *++p;
     if (yych <= 0x7F)
-      goto yy68;
-    if (yych <= 0xBF)
+      goto yy65;
+    if (yych <= 0x8F)
       goto yy67;
-    goto yy68;
+    goto yy65;
   yy71:
     yych = *++p;
-    if (yych <= 0x8F)
-      goto yy68;
-    if (yych <= 0xBF)
-      goto yy70;
-    goto yy68;
-  yy72:
-    yych = *++p;
     if (yych <= 0x7F)
-      goto yy68;
-    if (yych <= 0xBF)
-      goto yy70;
-    goto yy68;
-  yy73:
-    yych = *++p;
-    if (yych <= 0x7F)
-      goto yy68;
-    if (yych <= 0x8F)
-      goto yy70;
-    goto yy68;
-  yy74:
-    yych = *++p;
-    if (yych <= 0x7F)
-      goto yy68;
+      goto yy65;
     if (yych <= 0x9F)
-      goto yy67;
-    goto yy68;
-  yy75:
-    yych = *++p;
-    if (yych == '\n')
-      goto yy65;
-    goto yy68;
-  yy76:
-    ++p;
-    yych = *p;
-  yy77:
-    if (yybm[0 + yych] & 128) {
-      goto yy76;
-    }
-    if (yych <= 0x08)
-      goto yy68;
-    if (yych <= '\n')
-      goto yy65;
-    if (yych <= '\r')
-      goto yy75;
-    goto yy68;
-  yy78:
+      goto yy64;
+    goto yy65;
+  yy72:
     yyaccept = 1;
     marker = ++p;
     yych = *p;
-  yy79:
-    if (yych <= '\f') {
-      if (yych <= 0x08)
-        goto yy62;
-      if (yych == '\n')
-        goto yy65;
-      goto yy78;
-    } else {
-      if (yych <= '\r')
-        goto yy80;
-      if (yych == ' ')
-        goto yy78;
-      goto yy62;
+  yy73:
+    if (yybm[0 + yych] & 128) {
+      goto yy72;
     }
-  yy80:
-    ++p;
-    if ((yych = *p) == '\n')
+    if (yych <= 0x08)
+      goto yy62;
+    if (yych <= '\n')
+      goto yy75;
+    if (yych >= 0x0E)
+      goto yy62;
+    yych = *++p;
+    if (yych != '\n')
       goto yy65;
-    goto yy68;
+  yy75:
+    ++p;
+    yych = *p;
+    goto yy62;
+  }
+}
+
+bufsize_t _scan_table_row_end(const unsigned char *p) {
+  const unsigned char *marker = NULL;
+  const unsigned char *start = p;
+
+  {
+    unsigned char yych;
+    static const unsigned char yybm[] = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 128, 128, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   128, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,   0, 0,   0,   0, 0, 0,
+    };
+    yych = *(marker = p);
+    if (yych <= 0xC1) {
+      if (yych <= '\f') {
+        if (yych <= 0x08)
+          goto yy83;
+        if (yych == '\n')
+          goto yy81;
+        goto yy79;
+      } else {
+        if (yych <= 0x1F) {
+          if (yych <= '\r')
+            goto yy80;
+          goto yy83;
+        } else {
+          if (yych <= ' ')
+            goto yy79;
+          if (yych <= 0x7F)
+            goto yy83;
+        }
+      }
+    } else {
+      if (yych <= 0xED) {
+        if (yych <= 0xDF)
+          goto yy84;
+        if (yych <= 0xE0)
+          goto yy86;
+        if (yych <= 0xEC)
+          goto yy87;
+        goto yy91;
+      } else {
+        if (yych <= 0xF0) {
+          if (yych <= 0xEF)
+            goto yy87;
+          goto yy88;
+        } else {
+          if (yych <= 0xF3)
+            goto yy89;
+          if (yych <= 0xF4)
+            goto yy90;
+        }
+      }
+    }
+  yy78 : { return 0; }
+  yy79:
+    yych = *(marker = ++p);
+    if (yych <= 0x08)
+      goto yy78;
+    if (yych <= '\r')
+      goto yy94;
+    if (yych == ' ')
+      goto yy94;
+    goto yy78;
+  yy80:
+    yych = *++p;
+    if (yych != '\n')
+      goto yy78;
+  yy81:
+    ++p;
+    { return (bufsize_t)(p - start); }
+  yy83:
+    yych = *++p;
+    goto yy78;
+  yy84:
+    yych = *++p;
+    if (yych <= 0x7F)
+      goto yy85;
+    if (yych <= 0xBF)
+      goto yy83;
+  yy85:
+    p = marker;
+    goto yy78;
+  yy86:
+    yych = *++p;
+    if (yych <= 0x9F)
+      goto yy85;
+    if (yych <= 0xBF)
+      goto yy84;
+    goto yy85;
+  yy87:
+    yych = *++p;
+    if (yych <= 0x7F)
+      goto yy85;
+    if (yych <= 0xBF)
+      goto yy84;
+    goto yy85;
+  yy88:
+    yych = *++p;
+    if (yych <= 0x8F)
+      goto yy85;
+    if (yych <= 0xBF)
+      goto yy87;
+    goto yy85;
+  yy89:
+    yych = *++p;
+    if (yych <= 0x7F)
+      goto yy85;
+    if (yych <= 0xBF)
+      goto yy87;
+    goto yy85;
+  yy90:
+    yych = *++p;
+    if (yych <= 0x7F)
+      goto yy85;
+    if (yych <= 0x8F)
+      goto yy87;
+    goto yy85;
+  yy91:
+    yych = *++p;
+    if (yych <= 0x7F)
+      goto yy85;
+    if (yych <= 0x9F)
+      goto yy84;
+    goto yy85;
+  yy92:
+    yych = *++p;
+    if (yych == '\n')
+      goto yy81;
+    goto yy85;
+  yy93:
+    ++p;
+    yych = *p;
+  yy94:
+    if (yybm[0 + yych] & 128) {
+      goto yy93;
+    }
+    if (yych <= 0x08)
+      goto yy85;
+    if (yych <= '\n')
+      goto yy81;
+    if (yych <= '\r')
+      goto yy92;
+    goto yy85;
   }
 }
