@@ -80,6 +80,7 @@ afl:
 	    -i test/afl_test_cases \
 	    -o test/afl_results \
 	    -x test/afl_dictionary \
+	    $(AFL_OPTIONS) \
 	    -t 100 \
 	    $(CMARK) -e table -e strikethrough -e autolink -e tagfilter $(CMARK_OPTS)
 
