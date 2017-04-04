@@ -105,50 +105,36 @@ static table_row *row_from_string(cmark_syntax_extension *self,
                                   cmark_parser *parser, unsigned char *string,
                                   int len) {
   table_row *row = NULL;
-  bufsize_t cell_matched = 0, got_cell;
-  bufsize_t cell_offset = 0;
-  bool got_any_pipe = false;
+  bufsize_t cell_matched, pipe_matched, offset = 0;
 
   row = (table_row *)parser->mem->calloc(1, sizeof(table_row));
   row->n_columns = 0;
   row->cells = NULL;
 
-  if (len > 0 && string[0] == '|') {
-    ++cell_offset;
-    got_any_pipe = true;
-  }
+  if (len > 0 && string[0] == '|')
+    ++offset;
 
   do {
-    cell_matched = got_cell = scan_table_cell(string, len, cell_offset);
-    if (cell_matched) {
-      cmark_strbuf *cell_buf = unescape_pipes(parser->mem, string + cell_offset,
+    cell_matched = scan_table_cell(string, len, offset);
+    pipe_matched = scan_table_cell_end(string, len, offset + cell_matched);
+
+    if (cell_matched || pipe_matched) {
+      cmark_strbuf *cell_buf = unescape_pipes(parser->mem, string + offset,
           cell_matched);
       cmark_strbuf_trim(cell_buf);
       row->n_columns += 1;
       row->cells = cmark_llist_append(parser->mem, row->cells, cell_buf);
-      cell_offset += cell_matched;
     }
 
-    cell_matched = scan_table_cell_end(string, len, cell_offset);
-    cell_offset += cell_matched;
+    offset += cell_matched + pipe_matched;
 
-    if (cell_matched)
-      got_any_pipe = true;
-
-    if (!got_cell && cell_matched) {
-      row->n_columns += 1;
-      cmark_strbuf *buf = (cmark_strbuf *)parser->mem->calloc(1, sizeof(cmark_strbuf));;
-      cmark_strbuf_init(parser->mem, buf, 0);
-      row->cells = cmark_llist_append(parser->mem, row->cells, buf);
+    if (!pipe_matched) {
+      pipe_matched = scan_table_row_end(string, len, offset);
+      offset += pipe_matched;
     }
+  } while ((cell_matched || pipe_matched) && offset < len);
 
-    if (!cell_matched) {
-      cell_matched = scan_table_row_end(string, len, cell_offset);
-      cell_offset += cell_matched;
-    }
-  } while (cell_matched && cell_offset < len);
-
-  if (cell_offset != len || !got_any_pipe) {
+  if (offset != len || !row->n_columns) {
     free_table_row(parser->mem, row);
     row = NULL;
   }

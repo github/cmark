@@ -3273,8 +3273,6 @@ block-level structure:
 </blockquote>
 ````````````````````````````````
 
-There must be at least one pipe in a line for it to constitute a table row:
-
 ```````````````````````````````` example table
 | abc | def |
 | --- | --- |
@@ -3294,8 +3292,11 @@ bim
 <tr>
 <td>bar</td>
 <td>baz</td>
+</tr>
+<tr>
+<td>bar</td>
+<td></td>
 </tr></tbody></table>
-<p>bar</p>
 <p>bim</p>
 ````````````````````````````````
 
