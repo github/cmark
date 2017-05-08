@@ -708,6 +708,10 @@ char *cmark_render_latex_with_mem(cmark_node *root, int options, int width, cmar
  */
 #define CMARK_OPT_GITHUB_PRE_LANG (1 << 11)
 
+/** Be liberal in interpreting inline HTML tags.
+ */
+#define CMARK_OPT_LIBERAL_HTML_TAG (1 << 12)
+
 /**
  * ## Version information
  */
