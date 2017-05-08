@@ -24,6 +24,7 @@ typedef enum {
   FORMAT_XML,
   FORMAT_MAN,
   FORMAT_COMMONMARK,
+  FORMAT_PLAINTEXT,
   FORMAT_LATEX
 } writer_format;
 
@@ -31,7 +32,7 @@ void print_usage() {
   printf("Usage:   cmark-gfm [FILE*]\n");
   printf("Options:\n");
   printf("  --to, -t FORMAT   Specify output format (html, xml, man, "
-         "commonmark, latex)\n");
+         "commonmark, plaintext, latex)\n");
   printf("  --width WIDTH     Specify wrap width (default 0 = nowrap)\n");
   printf("  --sourcepos       Include source position attribute\n");
   printf("  --hardbreaks      Treat newlines as hard line breaks\n");
@@ -64,6 +65,9 @@ static bool print_document(cmark_node *document, writer_format writer,
     break;
   case FORMAT_COMMONMARK:
     result = cmark_render_commonmark_with_mem(document, options, width, mem);
+    break;
+  case FORMAT_PLAINTEXT:
+    result = cmark_render_plaintext_with_mem(document, options, width, mem);
     break;
   case FORMAT_LATEX:
     result = cmark_render_latex_with_mem(document, options, width, mem);
@@ -168,6 +172,8 @@ int main(int argc, char *argv[]) {
           writer = FORMAT_XML;
         } else if (strcmp(argv[i], "commonmark") == 0) {
           writer = FORMAT_COMMONMARK;
+        } else if (strcmp(argv[i], "plaintext") == 0) {
+          writer = FORMAT_PLAINTEXT;
         } else if (strcmp(argv[i], "latex") == 0) {
           writer = FORMAT_LATEX;
         } else {
