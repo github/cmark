@@ -1,15 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-
-#include "config.h"
-#include "cmark.h"
 #include "node.h"
-#include "buffer.h"
-#include "utf8.h"
-#include "scanners.h"
-#include "render.h"
 #include "syntax_extension.h"
 
 #define OUT(s, wrap, escaping) renderer->out(renderer, node, s, wrap, escaping)
