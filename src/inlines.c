@@ -1148,7 +1148,7 @@ static int parse_inline(cmark_parser *parser, subject *subj, cmark_node *parent,
     new_inl = handle_entity(subj);
     break;
   case '<':
-    new_inl = handle_pointy_brace(subj, options & CMARK_OPT_LIBERAL_HTML_TAG);
+    new_inl = handle_pointy_brace(subj, (options & CMARK_OPT_LIBERAL_HTML_TAG) != 0);
     break;
   case '*':
   case '_':
