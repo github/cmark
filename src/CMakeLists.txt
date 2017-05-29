@@ -100,9 +100,9 @@ if (CMARK_SHARED)
   add_library(${LIBRARY} SHARED ${LIBRARY_SOURCES})
   # Include minor version and patch level in soname for now.
   set_target_properties(${LIBRARY} PROPERTIES
-  OUTPUT_NAME "cmark-gfm"
-  SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}.gfm.${PROJECT_VERSION_GFM}
-  VERSION ${PROJECT_VERSION})
+    OUTPUT_NAME "cmark-gfm"
+    SOVERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}.gfm.${PROJECT_VERSION_GFM}
+    VERSION ${PROJECT_VERSION})
 
   set_property(TARGET ${LIBRARY}
     APPEND PROPERTY MACOSX_RPATH true)
@@ -123,21 +123,19 @@ if (CMARK_STATIC)
   POSITION_INDEPENDENT_CODE ON)
 
   if (MSVC)
-  set_target_properties(${STATICLIBRARY} PROPERTIES
-    OUTPUT_NAME "cmark-gfm_static"
-    VERSION ${PROJECT_VERSION})
+    set_target_properties(${STATICLIBRARY} PROPERTIES
+      OUTPUT_NAME "cmark-gfm_static"
+      VERSION ${PROJECT_VERSION})
   else()
-  set_target_properties(${STATICLIBRARY} PROPERTIES
-    OUTPUT_NAME "cmark-gfm"
-    VERSION ${PROJECT_VERSION})
-endif(MSVC)
+    set_target_properties(${STATICLIBRARY} PROPERTIES
+      OUTPUT_NAME "cmark-gfm"
+      VERSION ${PROJECT_VERSION})
+  endif(MSVC)
 
-target_link_libraries(cmark-gfm ${CMAKE_DL_LIBS})
+  target_link_libraries(cmark-gfm ${CMAKE_DL_LIBS})
 
   list(APPEND CMARK_INSTALL ${STATICLIBRARY})
 endif()
-set_property(TARGET ${LIBRARY}
-  APPEND PROPERTY MACOSX_RPATH true)
 
 # Avoid name clash between PROGRAM and LIBRARY pdb files.
 set_target_properties(${LIBRARY} PROPERTIES PDB_NAME cmark-gfm_dll)
@@ -154,7 +152,7 @@ set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
 
 include (InstallRequiredSystemLibraries)
 install(TARGETS ${PROGRAM} ${CMARK_INSTALL}
-  EXPORT cmark
+  EXPORT cmark-gfm
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib${LIB_SUFFIX}
   ARCHIVE DESTINATION lib${LIB_SUFFIX}
@@ -167,14 +165,14 @@ if(CMARK_SHARED OR CMARK_STATIC)
     DESTINATION lib${LIB_SUFFIX}/pkgconfig)
 
   install(FILES
-  cmark.h
-  cmark_extension_api.h
-  ${CMAKE_CURRENT_BINARY_DIR}/cmark_export.h
-  ${CMAKE_CURRENT_BINARY_DIR}/cmark_version.h
-  DESTINATION include
-  )
+    cmark.h
+    cmark_extension_api.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cmark_export.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cmark_version.h
+    DESTINATION include
+    )
 
-  install(EXPORT cmark DESTINATION lib${LIB_SUFFIX}/cmake)
+  install(EXPORT cmark-gfm DESTINATION lib${LIB_SUFFIX}/cmake-gfm)
 endif()
 
 # Feature tests
