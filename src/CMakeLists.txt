@@ -132,8 +132,6 @@ if (CMARK_STATIC)
       VERSION ${PROJECT_VERSION})
   endif(MSVC)
 
-  target_link_libraries(cmark-gfm ${CMAKE_DL_LIBS})
-
   list(APPEND CMARK_INSTALL ${STATICLIBRARY})
 endif()
 
