@@ -119,8 +119,8 @@ endif()
 if (CMARK_STATIC)
   add_library(${STATICLIBRARY} STATIC ${LIBRARY_SOURCES})
   set_target_properties(${STATICLIBRARY} PROPERTIES
-  COMPILE_FLAGS -DCMARK_STATIC_DEFINE
-  POSITION_INDEPENDENT_CODE ON)
+    COMPILE_FLAGS -DCMARK_STATIC_DEFINE
+    POSITION_INDEPENDENT_CODE ON)
 
   if (MSVC)
     set_target_properties(${STATICLIBRARY} PROPERTIES
@@ -136,12 +136,6 @@ if (CMARK_STATIC)
 
   list(APPEND CMARK_INSTALL ${STATICLIBRARY})
 endif()
-
-# Avoid name clash between PROGRAM and LIBRARY pdb files.
-set_target_properties(${LIBRARY} PROPERTIES PDB_NAME cmark-gfm_dll)
-
-generate_export_header(${LIBRARY}
-    BASE_NAME ${PROJECT_NAME})
 
 if (MSVC)
   set_property(TARGET ${PROGRAM}

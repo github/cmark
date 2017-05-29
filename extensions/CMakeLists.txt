@@ -39,10 +39,12 @@ if (CMARK_SHARED)
   # Avoid name clash between PROGRAM and LIBRARY pdb files.
   set_target_properties(${LIBRARY} PROPERTIES PDB_NAME cmark-gfmextensions_dll)
 
+  generate_export_header(${LIBRARY}
+    BASE_NAME cmarkextensions)
+
   list(APPEND CMARK_INSTALL ${LIBRARY})
   target_link_libraries(${LIBRARY} libcmark-gfm)
 
-  generate_export_header(${LIBRARY} BASE_NAME cmarkextensions)
 endif()
 
 if (CMARK_STATIC)
@@ -65,8 +67,9 @@ if (CMARK_STATIC)
   list(APPEND CMARK_INSTALL ${STATICLIBRARY})
 endif()
 
-set_target_properties(${LIBRARY} PROPERTIES PDB_NAME cmark-gfmextensions_dll)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_NO_WARNINGS ON)
 
+include (InstallRequiredSystemLibraries)
 install(TARGETS ${CMARK_INSTALL}
   EXPORT cmark-gfmextensions
   RUNTIME DESTINATION bin
