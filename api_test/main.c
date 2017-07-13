@@ -969,7 +969,7 @@ static void test_pathological_regressions(test_batch_runner *runner) {
     free(html);
     free(input);
 
-    OK(runner, TIMING < 100, "takes less than 100ms to run");
+    OK(runner, TIMING < 1000, "takes less than 1000ms to run");
   }
 
   {
@@ -985,7 +985,7 @@ static void test_pathological_regressions(test_batch_runner *runner) {
     free(html);
     free(input);
 
-    OK(runner, TIMING < 100, "takes less than 100ms to run");
+    OK(runner, TIMING < 1000, "takes less than 1000ms to run");
   }
 }
 
