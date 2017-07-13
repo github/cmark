@@ -934,6 +934,61 @@ static void test_feed_across_line_ending(test_batch_runner *runner) {
   cmark_node_free(document);
 }
 
+#if !defined(_WIN32) || defined(__CYGWIN__)
+#  include <sys/time.h>
+static struct timeval _before, _after;
+static int _timing;
+#  define START_TIMING() \
+       gettimeofday(&_before, NULL)
+
+#  define END_TIMING() \
+        do { \
+          gettimeofday(&_after, NULL); \
+          _timing = (_after.tv_sec - _before.tv_sec) * 1000 + (_after.tv_usec - _before.tv_usec) / 1000; \
+        } while (0)
+
+#  define TIMING _timing
+#else
+#  define START_TIMING()
+#  define END_TIMING()
+#  define TIMING 0
+#endif
+
+static void test_pathological_regressions(test_batch_runner *runner) {
+  {
+    // I don't care what the output is, so long as it doesn't take too long.
+    char path[] = "[a](b";
+    char *input = (char *)calloc(1, (sizeof(path) - 1) * 50000);
+    for (int i = 0; i < 50000; ++i)
+      memcpy(input + i * (sizeof(path) - 1), path, sizeof(path) - 1);
+
+    START_TIMING();
+    char *html = cmark_markdown_to_html(input, (sizeof(path) - 1) * 50000,
+                                        CMARK_OPT_VALIDATE_UTF8);
+    END_TIMING();
+    free(html);
+    free(input);
+
+    OK(runner, TIMING < 100, "takes less than 100ms to run");
+  }
+
+  {
+    char path[] = "[a](<b";
+    char *input = (char *)calloc(1, (sizeof(path) - 1) * 50000);
+    for (int i = 0; i < 50000; ++i)
+      memcpy(input + i * (sizeof(path) - 1), path, sizeof(path) - 1);
+
+    START_TIMING();
+    char *html = cmark_markdown_to_html(input, (sizeof(path) - 1) * 50000,
+                                        CMARK_OPT_VALIDATE_UTF8);
+    END_TIMING();
+    free(html);
+    free(input);
+
+    OK(runner, TIMING < 100, "takes less than 100ms to run");
+  }
+}
+
 int main() {
   int retval;
   test_batch_runner *runner = test_batch_runner_new();
@@ -960,6 +1015,7 @@ int main() {
   test_cplusplus(runner);
   test_safe(runner);
   test_feed_across_line_ending(runner);
+  test_pathological_regressions(runner);
 
   test_print_summary(runner);
   retval = test_ok(runner) ? 0 : 1;
