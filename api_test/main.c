@@ -950,7 +950,7 @@ static void source_pos(test_batch_runner *runner) {
                       "    <emph sourcepos=\"1:4-1:10\">\n"
                       "      <text sourcepos=\"1:5-1:9\">there</text>\n"
                       "    </emph>\n"
-                      "    <text sourcepos=\"1:10-1:10\">.</text>\n"
+                      "    <text sourcepos=\"1:11-1:11\">.</text>\n"
                       "  </paragraph>\n"
                       "  <paragraph sourcepos=\"3:1-4:6\">\n"
                       "    <text sourcepos=\"3:1-3:5\">Hello</text>\n"
