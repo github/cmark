@@ -77,7 +77,7 @@ static CMARK_INLINE cmark_node *make_literal(cmark_mem *mem, cmark_node_type t,
   e->type = (uint16_t)t;
   e->as.literal = s;
   e->start_line = start_line;
-  e->start_column = start_column;
+  e->start_column = start_column + 1;  // columns are 1 based.
   return e;
 }
 
@@ -661,6 +661,9 @@ static delimiter *S_insert_emph(subject *subj, delimiter *opener,
     tmp = tmpnext;
   }
   cmark_node_insert_after(opener_inl, emph);
+
+  emph->start_line = subj->line;
+  emph->start_column = opener_inl->start_column;
 
   // if opener has 0 characters, remove it and its associated inline
   if (opener_num_chars == 0) {
