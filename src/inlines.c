@@ -146,7 +146,10 @@ static CMARK_INLINE cmark_node *make_autolink(subject *subj,
   cmark_node *link = make_simple(subj->mem, CMARK_NODE_LINK);
   link->as.link.url = cmark_clean_autolink(subj->mem, &url, is_email);
   link->as.link.title = cmark_chunk_literal("");
-  cmark_node_append_child(link, make_str_with_entities(subj, start_column, end_column, &url));
+  link->start_line = link->end_line = subj->line;
+  link->start_column = start_column + 1;
+  link->end_column = end_column + 1;
+  cmark_node_append_child(link, make_str_with_entities(subj, start_column + 1, end_column - 1, &url));
   return link;
 }
 
@@ -784,7 +787,7 @@ static cmark_node *handle_pointy_brace(subject *subj, bool liberal_html_tag) {
     contents = cmark_chunk_dup(&subj->input, subj->pos, matchlen - 1);
     subj->pos += matchlen;
 
-    return make_autolink(subj, subj->pos - 1 - matchlen, subj->pos, contents, 0);
+    return make_autolink(subj, subj->pos - 1 - matchlen, subj->pos - 1, contents, 0);
   }
 
   // next try to match an email autolink
@@ -793,7 +796,7 @@ static cmark_node *handle_pointy_brace(subject *subj, bool liberal_html_tag) {
     contents = cmark_chunk_dup(&subj->input, subj->pos, matchlen - 1);
     subj->pos += matchlen;
 
-    return make_autolink(subj, subj->pos - 1 - matchlen, subj->pos, contents, 1);
+    return make_autolink(subj, subj->pos - 1 - matchlen, subj->pos - 1, contents, 1);
   }
 
   // finally, try to match an html tag
@@ -1019,6 +1022,9 @@ match:
   inl = make_simple(subj->mem, is_image ? CMARK_NODE_IMAGE : CMARK_NODE_LINK);
   inl->as.link.url = url;
   inl->as.link.title = title;
+  inl->start_line = inl->end_line = subj->line;
+  inl->start_column = opener->inl_text->start_column;
+  inl->end_column = subj->pos + subj->column_offset + subj->block_offset;
   cmark_node_insert_before(opener->inl_text, inl);
   // Add link text:
   tmp = opener->inl_text->next;
