@@ -551,9 +551,9 @@ static void render_xml(test_batch_runner *runner) {
   STR_EQ(runner, xml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                       "<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n"
                       "<paragraph sourcepos=\"1:1-1:9\">\n"
-                      "  <text>foo </text>\n"
-                      "  <emph>\n"
-                      "    <text>bar</text>\n"
+                      "  <text sourcepos=\"1:1-1:4\">foo </text>\n"
+                      "  <emph sourcepos=\"1:5-1:9\">\n"
+                      "    <text sourcepos=\"1:6-1:8\">bar</text>\n"
                       "  </emph>\n"
                       "</paragraph>\n",
          "render first paragraph with source pos");
