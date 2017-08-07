@@ -933,6 +933,36 @@ static void test_feed_across_line_ending(test_batch_runner *runner) {
   cmark_node_free(document);
 }
 
+static void source_pos(test_batch_runner *runner) {
+  static const char markdown[] =
+    "Hi *there*.\n"
+    "\n"
+    "Hello\n"
+    "there.\n";
+
+  cmark_node *doc = cmark_parse_document(markdown, sizeof(markdown) - 1, CMARK_OPT_DEFAULT);
+  char *xml = cmark_render_xml(doc, CMARK_OPT_DEFAULT | CMARK_OPT_SOURCEPOS);
+  STR_EQ(runner, xml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                      "<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n"
+                      "<document sourcepos=\"1:1-4:6\" xmlns=\"http://commonmark.org/xml/1.0\">\n"
+                      "  <paragraph sourcepos=\"1:1-1:11\">\n"
+                      "    <text sourcepos=\"1:1-1:3\">Hi </text>\n"
+                      "    <emph sourcepos=\"1:4-1:10\">\n"
+                      "      <text sourcepos=\"1:5-1:9\">there</text>\n"
+                      "    </emph>\n"
+                      "    <text sourcepos=\"1:10-1:10\">.</text>\n"
+                      "  </paragraph>\n"
+                      "  <paragraph sourcepos=\"3:1-4:6\">\n"
+                      "    <text sourcepos=\"3:1-3:5\">Hello</text>\n"
+                      "    <softbreak />\n"
+                      "    <text sourcepos=\"4:1-4:6\">there.</text>\n"
+                      "  </paragraph>\n"
+                      "</document>\n",
+         "sourcepos are as expected");
+  free(xml);
+  cmark_node_free(doc);
+}
+
 int main() {
   int retval;
   test_batch_runner *runner = test_batch_runner_new();
@@ -959,6 +989,7 @@ int main() {
   test_cplusplus(runner);
   test_safe(runner);
   test_feed_across_line_ending(runner);
+  source_pos(runner);
 
   test_print_summary(runner);
   retval = test_ok(runner) ? 0 : 1;

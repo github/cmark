@@ -1222,7 +1222,7 @@ void cmark_parse_inlines(cmark_parser *parser,
                          cmark_reference_map *refmap,
                          int options) {
   subject subj;
-  subject_from_buf(parser->mem, parser->line_number, &subj, &parent->content, refmap);
+  subject_from_buf(parser->mem, parent->start_line, &subj, &parent->content, refmap);
   cmark_chunk_rtrim(&subj.input);
 
   while (!is_eof(&subj) && parse_inline(parser, &subj, parent, options))
