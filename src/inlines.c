@@ -48,6 +48,7 @@ typedef struct subject{
   cmark_chunk input;
   int line;
   bufsize_t pos;
+  int block_offset;
   int column_offset;
   cmark_reference_map *refmap;
   delimiter *last_delim;
@@ -65,7 +66,7 @@ static delimiter *S_insert_emph(subject *subj, delimiter *opener,
 
 static int parse_inline(cmark_parser *parser, subject *subj, cmark_node *parent, int options);
 
-static void subject_from_buf(cmark_mem *mem, int line_number, subject *e,
+static void subject_from_buf(cmark_mem *mem, int line_number, int block_offset, subject *e,
                              cmark_strbuf *buffer, cmark_reference_map *refmap);
 static bufsize_t subject_find_special_char(subject *subj, int options);
 
@@ -79,8 +80,8 @@ static CMARK_INLINE cmark_node *make_literal(subject *subj, cmark_node_type t,
   e->as.literal = s;
   e->start_line = e->end_line = subj->line;
   // columns are 1 based.
-  e->start_column = start_column + 1 - subj->column_offset;
-  e->end_column = end_column + 1 - subj->column_offset;
+  e->start_column = start_column + 1 + subj->column_offset + subj->block_offset;
+  e->end_column = end_column + 1 + subj->column_offset + subj->block_offset;
   return e;
 }
 
@@ -149,7 +150,7 @@ static CMARK_INLINE cmark_node *make_autolink(subject *subj,
   return link;
 }
 
-static void subject_from_buf(cmark_mem *mem, int line_number, subject *e,
+static void subject_from_buf(cmark_mem *mem, int line_number, int block_offset, subject *e,
                              cmark_strbuf *buffer, cmark_reference_map *refmap) {
   int i;
   e->mem = mem;
@@ -158,6 +159,7 @@ static void subject_from_buf(cmark_mem *mem, int line_number, subject *e,
   e->input.alloc = 0;
   e->line = line_number;
   e->pos = 0;
+  e->block_offset = block_offset;
   e->column_offset = 0;
   e->refmap = refmap;
   e->last_delim = NULL;
@@ -667,8 +669,8 @@ static delimiter *S_insert_emph(subject *subj, delimiter *opener,
   cmark_node_insert_after(opener_inl, emph);
 
   emph->start_line = emph->end_line = subj->line;
-  emph->start_column = opener_inl->start_column - subj->column_offset;
-  emph->end_column = closer_inl->end_column - subj->column_offset;
+  emph->start_column = opener_inl->start_column + subj->column_offset + subj->block_offset;
+  emph->end_column = closer_inl->end_column + subj->column_offset + subj->block_offset;
 
   // if opener has 0 characters, remove it and its associated inline
   if (opener_num_chars == 0) {
@@ -1064,7 +1066,7 @@ static cmark_node *handle_newline(subject *subj) {
     advance(subj);
   }
   ++subj->line;
-  subj->column_offset = subj->pos;
+  subj->column_offset = -subj->pos;
   // skip spaces at beginning of line
   skip_spaces(subj);
   if (nlpos > 1 && peek_at(subj, nlpos - 1) == ' ' &&
@@ -1232,7 +1234,7 @@ void cmark_parse_inlines(cmark_parser *parser,
                          cmark_reference_map *refmap,
                          int options) {
   subject subj;
-  subject_from_buf(parser->mem, parent->start_line, &subj, &parent->content, refmap);
+  subject_from_buf(parser->mem, parent->start_line, parent->start_column - 1, &subj, &parent->content, refmap);
   cmark_chunk_rtrim(&subj.input);
 
   while (!is_eof(&subj) && parse_inline(parser, &subj, parent, options))
@@ -1271,7 +1273,8 @@ bufsize_t cmark_parse_reference_inline(cmark_mem *mem, cmark_strbuf *input,
   bufsize_t matchlen = 0;
   bufsize_t beforetitle;
 
-  subject_from_buf(mem, -1, &subj, input, NULL);
+  // TODO XXX
+  subject_from_buf(mem, -1, 0, &subj, input, NULL);
 
   // parse label:
   if (!link_label(&subj, &lab) || lab.len == 0)
