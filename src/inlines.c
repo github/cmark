@@ -293,7 +293,7 @@ static cmark_node *handle_backticks(subject *subj) {
     cmark_strbuf_trim(&buf);
     cmark_strbuf_normalize_whitespace(&buf);
 
-    return make_code(subj, startpos, endpos - 1, cmark_chunk_buf_detach(&buf));
+    return make_code(subj, startpos, endpos - openticks.len - 1, cmark_chunk_buf_detach(&buf));
   }
 }
 
