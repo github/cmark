@@ -1452,6 +1452,10 @@ void cmark_inline_parser_set_offset(cmark_inline_parser *parser, int offset) {
   parser->pos = offset;
 }
 
+int cmark_inline_parser_get_column(cmark_inline_parser *parser) {
+  return parser->pos + 1 + parser->column_offset + parser->block_offset;
+}
+
 cmark_chunk *cmark_inline_parser_get_chunk(cmark_inline_parser *parser) {
   return &parser->input;
 }
@@ -1479,4 +1483,8 @@ void cmark_node_unput(cmark_node *node, int n) {
 
 delimiter *cmark_inline_parser_get_last_delimiter(cmark_inline_parser *parser) {
   return parser->last_delim;
+}
+
+int cmark_inline_parser_get_line(cmark_inline_parser *parser) {
+  return parser->line;
 }

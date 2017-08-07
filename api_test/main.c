@@ -5,6 +5,7 @@
 #define CMARK_NO_SHORT_NAMES
 #include "cmark.h"
 #include "node.h"
+#include "../extensions/core-extensions.h"
 
 #include "harness.h"
 #include "cplusplus.h"
@@ -998,6 +999,43 @@ static void source_pos(test_batch_runner *runner) {
   cmark_node_free(doc);
 }
 
+static void ext_source_pos(test_batch_runner *runner) {
+  static const char *extensions[3] = {
+    "strikethrough",
+    "table",
+    "autolink",
+  };
+
+  static const char markdown[] =
+    "Hi ~friend~.\n"
+    "\n"
+    "> www.github.com\n"
+    "\n"
+    "| a | b | *c* |\n"
+    "| - | - | --: |\n"
+    "| 1 | 2 | ~3~ |\n";
+
+  cmark_parser *parser = cmark_parser_new(CMARK_OPT_DEFAULT);
+  core_extensions_ensure_registered();
+
+  for (int i = 0; i < (int)(sizeof(extensions) / sizeof(*extensions)); ++i) {
+    cmark_syntax_extension *ext = cmark_find_syntax_extension(extensions[i]);
+    cmark_parser_attach_syntax_extension(parser, ext);
+  }
+
+  cmark_parser_feed(parser, markdown, sizeof(markdown) - 1);
+
+  cmark_node *doc = cmark_parser_finish(parser);
+  char *xml = cmark_render_xml(doc, CMARK_OPT_DEFAULT | CMARK_OPT_SOURCEPOS);
+  STR_EQ(runner, xml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                      "<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n"
+                      "<document sourcepos=\"1:1-10:20\" xmlns=\"http://commonmark.org/xml/1.0\">\n"
+                      "</document>\n",
+         "sourcepos are as expected");
+  free(xml);
+  cmark_node_free(doc);
+}
+
 int main() {
   int retval;
   test_batch_runner *runner = test_batch_runner_new();
@@ -1025,6 +1063,7 @@ int main() {
   test_safe(runner);
   test_feed_across_line_ending(runner);
   source_pos(runner);
+  ext_source_pos(runner);
 
   test_print_summary(runner);
   retval = test_ok(runner) ? 0 : 1;
