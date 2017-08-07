@@ -943,13 +943,14 @@ static void source_pos(test_batch_runner *runner) {
     "> 1. Okay.\n"
     ">    Sure.\n"
     ">\n"
-    "> 2. Yes, okay.\n";
+    "> 2. Yes, okay.\n"
+    ">    ![ok](hi \"yes\")\n";
 
   cmark_node *doc = cmark_parse_document(markdown, sizeof(markdown) - 1, CMARK_OPT_DEFAULT);
   char *xml = cmark_render_xml(doc, CMARK_OPT_DEFAULT | CMARK_OPT_SOURCEPOS);
   STR_EQ(runner, xml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                       "<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n"
-                      "<document sourcepos=\"1:1-9:15\" xmlns=\"http://commonmark.org/xml/1.0\">\n"
+                      "<document sourcepos=\"1:1-10:20\" xmlns=\"http://commonmark.org/xml/1.0\">\n"
                       "  <paragraph sourcepos=\"1:1-1:11\">\n"
                       "    <text sourcepos=\"1:1-1:3\">Hi </text>\n"
                       "    <emph sourcepos=\"1:4-1:10\">\n"
@@ -969,8 +970,8 @@ static void source_pos(test_batch_runner *runner) {
                       "    </link>\n"
                       "    <text sourcepos=\"4:34-4:34\">.</text>\n"
                       "  </paragraph>\n"
-                      "  <block_quote sourcepos=\"6:1-9:15\">\n"
-                      "    <list sourcepos=\"6:3-9:15\" type=\"ordered\" start=\"1\" delim=\"period\" tight=\"false\">\n"
+                      "  <block_quote sourcepos=\"6:1-10:20\">\n"
+                      "    <list sourcepos=\"6:3-10:20\" type=\"ordered\" start=\"1\" delim=\"period\" tight=\"false\">\n"
                       "      <item sourcepos=\"6:3-8:1\">\n"
                       "        <paragraph sourcepos=\"6:6-7:10\">\n"
                       "          <text sourcepos=\"6:6-6:10\">Okay.</text>\n"
@@ -978,9 +979,13 @@ static void source_pos(test_batch_runner *runner) {
                       "          <text sourcepos=\"7:6-7:10\">Sure.</text>\n"
                       "        </paragraph>\n"
                       "      </item>\n"
-                      "      <item sourcepos=\"9:3-9:15\">\n"
-                      "        <paragraph sourcepos=\"9:6-9:15\">\n"
+                      "      <item sourcepos=\"9:3-10:20\">\n"
+                      "        <paragraph sourcepos=\"9:6-10:20\">\n"
                       "          <text sourcepos=\"9:6-9:15\">Yes, okay.</text>\n"
+                      "          <softbreak />\n"
+                      "          <image sourcepos=\"10:6-10:20\" destination=\"hi\" title=\"yes\">\n"
+                      "            <text sourcepos=\"10:8-10:9\">ok</text>\n"
+                      "          </image>\n"
                       "        </paragraph>\n"
                       "      </item>\n"
                       "    </list>\n"
