@@ -158,6 +158,7 @@ static void subject_from_buf(cmark_mem *mem, int line_number, subject *e,
   e->input.alloc = 0;
   e->line = line_number;
   e->pos = 0;
+  e->column_offset = 0;
   e->refmap = refmap;
   e->last_delim = NULL;
   e->last_bracket = NULL;
