@@ -672,8 +672,8 @@ static delimiter *S_insert_emph(subject *subj, delimiter *opener,
   cmark_node_insert_after(opener_inl, emph);
 
   emph->start_line = emph->end_line = subj->line;
-  emph->start_column = opener_inl->start_column + subj->column_offset + subj->block_offset;
-  emph->end_column = closer_inl->end_column + subj->column_offset + subj->block_offset;
+  emph->start_column = opener_inl->start_column + subj->column_offset;
+  emph->end_column = closer_inl->end_column + subj->column_offset;
 
   // if opener has 0 characters, remove it and its associated inline
   if (opener_num_chars == 0) {
