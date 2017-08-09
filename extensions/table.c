@@ -129,7 +129,7 @@ static table_row *row_from_string(cmark_syntax_extension *self,
           cell_matched);
       cmark_strbuf_trim(cell_buf);
 
-      node_cell *cell = parser->mem->calloc(1, sizeof(*cell));
+      node_cell *cell = (node_cell *)parser->mem->calloc(1, sizeof(*cell));
       cell->buf = cell_buf;
       cell->start_offset = offset;
       cell->end_offset = offset + cell_matched - 1;
@@ -235,7 +235,7 @@ static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
       cmark_parser_add_child(parser, parent_container, CMARK_NODE_TABLE_ROW,
                              parent_container->start_column);
   cmark_node_set_syntax_extension(table_header, self);
-  table_header->end_column = parent_container->start_column + strlen(parent_string) - 2;
+  table_header->end_column = parent_container->start_column + (int)strlen(parent_string) - 2;
   table_header->start_line = table_header->end_line = parent_container->start_line;
 
   table_header->as.opaque = ntr = (node_table_row *)parser->mem->calloc(1, sizeof(node_table_row));
