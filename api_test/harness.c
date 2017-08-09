@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "harness.h"
 
@@ -50,6 +51,16 @@ void INT_EQ(test_batch_runner *runner, int got, int expected, const char *msg,
   }
 }
 
+static char *write_tmp(char const *header, char const *data) {
+  char *name = strdup("/tmp/fileXXXXXX");
+  int fd = mkstemp(name);
+  FILE *f = fdopen(fd, "w+");
+  fputs(header, f);
+  fwrite(data, 1, strlen(data), f);
+  fclose(f);
+  return name;
+}
+
 void STR_EQ(test_batch_runner *runner, const char *got, const char *expected,
             const char *msg, ...) {
   int cond = strcmp(got, expected) == 0;
@@ -60,8 +71,15 @@ void STR_EQ(test_batch_runner *runner, const char *got, const char *expected,
   va_end(ap);
 
   if (!cond) {
-    fprintf(stderr, "  Got:      \"%s\"\n", got);
-    fprintf(stderr, "  Expected: \"%s\"\n", expected);
+    char *got_fn = write_tmp("actual\n", got);
+    char *expected_fn = write_tmp("expected\n", expected);
+    char buf[1024];
+    snprintf(buf, sizeof(buf), "git diff --no-index %s %s", expected_fn, got_fn);
+    system(buf);
+    unlink(got_fn);
+    unlink(expected_fn);
+    free(got_fn);
+    free(expected_fn);
   }
 }
 
