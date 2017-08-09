@@ -1082,6 +1082,30 @@ static void ext_source_pos(test_batch_runner *runner) {
   cmark_node_free(doc);
 }
 
+static void ref_source_pos(test_batch_runner *runner) {
+  static const char markdown[] =
+    "Let's try [reference] links.\n"
+    "\n"
+    "[reference]: https://github.com (GitHub)\n";
+
+  cmark_node *doc = cmark_parse_document(markdown, sizeof(markdown) - 1, CMARK_OPT_DEFAULT);
+  char *xml = cmark_render_xml(doc, CMARK_OPT_DEFAULT | CMARK_OPT_SOURCEPOS);
+  STR_EQ(runner, xml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                      "<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n"
+                      "<document sourcepos=\"1:1-3:40\" xmlns=\"http://commonmark.org/xml/1.0\">\n"
+                      "  <paragraph sourcepos=\"1:1-1:28\">\n"
+                      "    <text sourcepos=\"1:1-1:10\">Let's try </text>\n"
+                      "    <link sourcepos=\"1:11-1:21\" destination=\"https://github.com\" title=\"GitHub\">\n"
+                      "      <text sourcepos=\"1:12-1:20\">reference</text>\n"
+                      "    </link>\n"
+                      "    <text sourcepos=\"1:22-1:28\"> links.</text>\n"
+                      "  </paragraph>\n"
+                      "</document>\n",
+         "sourcepos are as expected");
+  free(xml);
+  cmark_node_free(doc);
+}
+
 int main() {
   int retval;
   test_batch_runner *runner = test_batch_runner_new();
@@ -1110,6 +1134,7 @@ int main() {
   test_feed_across_line_ending(runner);
   source_pos(runner);
   ext_source_pos(runner);
+  ref_source_pos(runner);
 
   test_print_summary(runner);
   retval = test_ok(runner) ? 0 : 1;
