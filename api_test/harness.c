@@ -50,6 +50,9 @@ void INT_EQ(test_batch_runner *runner, int got, int expected, const char *msg,
   }
 }
 
+#ifndef _WIN32
+#include <unistd.h>
+
 static char *write_tmp(char const *header, char const *data) {
   char *name = strdup("/tmp/fileXXXXXX");
   int fd = mkstemp(name);
@@ -59,6 +62,8 @@ static char *write_tmp(char const *header, char const *data) {
   fclose(f);
   return name;
 }
+
+#endif
 
 void STR_EQ(test_batch_runner *runner, const char *got, const char *expected,
             const char *msg, ...) {
@@ -70,6 +75,7 @@ void STR_EQ(test_batch_runner *runner, const char *got, const char *expected,
   va_end(ap);
 
   if (!cond) {
+#ifndef _WIN32
     char *got_fn = write_tmp("actual\n", got);
     char *expected_fn = write_tmp("expected\n", expected);
     char buf[1024];
@@ -79,6 +85,10 @@ void STR_EQ(test_batch_runner *runner, const char *got, const char *expected,
     remove(expected_fn);
     free(got_fn);
     free(expected_fn);
+#else
+    fprintf(stderr, "  Got:      \"%s\"\n", got);
+    fprintf(stderr, "  Expected: \"%s\"\n", expected);
+#endif
   }
 }
 
