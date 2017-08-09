@@ -202,7 +202,6 @@ static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
 
   parent_container->as.opaque = parser->mem->calloc(1, sizeof(node_table));
 
-
   set_n_table_columns(parent_container, header_row->n_columns);
 
   uint8_t *alignments =
@@ -225,6 +224,9 @@ static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
       cmark_parser_add_child(parser, parent_container, CMARK_NODE_TABLE_ROW,
                              cmark_parser_get_offset(parser));
   cmark_node_set_syntax_extension(table_header, self);
+  table_header->start_line = table_header->end_line = parent_container->start_line;
+  table_header->start_column = parent_container->start_column;
+  table_header->end_column = strlen(parent_string) - 1;
 
   table_header->as.opaque = ntr = (node_table_row *)parser->mem->calloc(1, sizeof(node_table_row));
   ntr->is_header = true;
