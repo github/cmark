@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "harness.h"
 
@@ -76,8 +75,8 @@ void STR_EQ(test_batch_runner *runner, const char *got, const char *expected,
     char buf[1024];
     snprintf(buf, sizeof(buf), "git diff --no-index %s %s", expected_fn, got_fn);
     system(buf);
-    unlink(got_fn);
-    unlink(expected_fn);
+    remove(got_fn);
+    remove(expected_fn);
     free(got_fn);
     free(expected_fn);
   }
