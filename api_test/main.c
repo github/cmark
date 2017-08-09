@@ -1007,7 +1007,7 @@ static void ext_source_pos(test_batch_runner *runner) {
   };
 
   static const char markdown[] =
-    "Hi ~friend~.\n"
+    "Hi ~~friend~~.\n"
     "\n"
     "> www.github.com\n"
     "\n"
@@ -1030,12 +1030,12 @@ static void ext_source_pos(test_batch_runner *runner) {
   STR_EQ(runner, xml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                       "<!DOCTYPE document SYSTEM \"CommonMark.dtd\">\n"
                       "<document sourcepos=\"1:1-7:15\" xmlns=\"http://commonmark.org/xml/1.0\">\n"
-                      "  <paragraph sourcepos=\"1:1-1:12\">\n"
+                      "  <paragraph sourcepos=\"1:1-1:14\">\n"
                       "    <text sourcepos=\"1:1-1:3\">Hi </text>\n"
-                      "    <strikethrough sourcepos=\"1:4-1:11\">\n"
-                      "      <text sourcepos=\"1:5-1:10\">friend</text>\n"
+                      "    <strikethrough sourcepos=\"1:4-1:13\">\n"
+                      "      <text sourcepos=\"1:6-1:11\">friend</text>\n"
                       "    </strikethrough>\n"
-                      "    <text sourcepos=\"1:12-1:12\">.</text>\n"
+                      "    <text sourcepos=\"1:14-1:14\">.</text>\n"
                       "  </paragraph>\n"
                       "  <block_quote sourcepos=\"3:1-3:16\">\n"
                       "    <paragraph sourcepos=\"3:3-3:16\">\n"
