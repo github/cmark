@@ -112,14 +112,13 @@ static table_row *row_from_string(cmark_syntax_extension *self,
                                   cmark_parser *parser, unsigned char *string,
                                   int len) {
   table_row *row = NULL;
-  bufsize_t cell_matched, pipe_matched, offset = 0;
+  bufsize_t cell_matched, pipe_matched, offset;
 
   row = (table_row *)parser->mem->calloc(1, sizeof(table_row));
   row->n_columns = 0;
   row->cells = NULL;
 
-  if (len > 0 && string[0] == '|')
-    ++offset;
+  offset = scan_table_cell_end(string, len, 0);
 
   do {
     cell_matched = scan_table_cell(string, len, offset);
@@ -134,8 +133,6 @@ static table_row *row_from_string(cmark_syntax_extension *self,
       cell->buf = cell_buf;
       cell->start_offset = offset;
       cell->end_offset = offset + cell_matched - 1;
-      while (cell->start_offset > 0 && string[cell->start_offset - 1] != '|')
-        --cell->start_offset;
       row->n_columns += 1;
       row->cells = cmark_llist_append(parser->mem, row->cells, cell);
     }
@@ -236,11 +233,10 @@ static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
 
   table_header =
       cmark_parser_add_child(parser, parent_container, CMARK_NODE_TABLE_ROW,
-                             cmark_parser_get_offset(parser));
+                             parent_container->start_column);
   cmark_node_set_syntax_extension(table_header, self);
-  table_header->start_line = table_header->end_line = parent_container->start_line;
-  table_header->start_column = parent_container->start_column;
   table_header->end_column = parent_container->start_column + strlen(parent_string) - 2;
+  table_header->start_line = table_header->end_line = parent_container->start_line;
 
   table_header->as.opaque = ntr = (node_table_row *)parser->mem->calloc(1, sizeof(node_table_row));
   ntr->is_header = true;
@@ -280,9 +276,9 @@ static cmark_node *try_opening_table_row(cmark_syntax_extension *self,
 
   table_row_block =
       cmark_parser_add_child(parser, parent_container, CMARK_NODE_TABLE_ROW,
-                             cmark_parser_get_offset(parser));
-
+                             parent_container->start_column);
   cmark_node_set_syntax_extension(table_row_block, self);
+  table_row_block->end_column = parent_container->end_column;
   table_row_block->as.opaque = parser->mem->calloc(1, sizeof(node_table_row));
 
   row = row_from_string(self, parser, input + cmark_parser_get_first_nonspace(parser),
@@ -295,14 +291,15 @@ static cmark_node *try_opening_table_row(cmark_syntax_extension *self,
     for (tmp = row->cells, i = 0; tmp && i < table_columns; tmp = tmp->next, ++i) {
       node_cell *cell = (node_cell *) tmp->data;
       cmark_node *node = cmark_parser_add_child(parser, table_row_block,
-          CMARK_NODE_TABLE_CELL, cmark_parser_get_offset(parser));
+          CMARK_NODE_TABLE_CELL, parent_container->start_column + cell->start_offset);
+      node->end_column = parent_container->start_column + cell->end_offset;
       cmark_node_set_string_content(node, (char *) cell->buf->ptr);
       cmark_node_set_syntax_extension(node, self);
     }
 
     for (; i < table_columns; ++i) {
       cmark_node *node = cmark_parser_add_child(
-          parser, table_row_block, CMARK_NODE_TABLE_CELL, cmark_parser_get_offset(parser));
+          parser, table_row_block, CMARK_NODE_TABLE_CELL, 0);
       cmark_node_set_syntax_extension(node, self);
     }
   }
