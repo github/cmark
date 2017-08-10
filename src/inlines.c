@@ -236,7 +236,8 @@ static CMARK_INLINE cmark_chunk take_while(subject *subj, int (*f)(int)) {
 // backticks, otherwise return the position in the subject
 // after the closing backticks.
 static bufsize_t scan_to_closing_backticks(subject *subj,
-                                           bufsize_t openticklength) {
+                                           bufsize_t openticklength,
+                                           int *newlines, int *since_newline) {
 
   bool found = false;
   if (openticklength > MAXBACKTICKS) {
@@ -251,8 +252,15 @@ static bufsize_t scan_to_closing_backticks(subject *subj,
   while (!found) {
     // read non backticks
     unsigned char c;
+    int nls = 0, since_nl = 0;
     while ((c = peek_char(subj)) && c != '`') {
       advance(subj);
+      if (c == '\n') {
+        ++nls;
+        since_nl = 0;
+      } else {
+        ++since_nl;
+      }
     }
     if (is_eof(subj)) {
       break;
@@ -267,6 +275,10 @@ static bufsize_t scan_to_closing_backticks(subject *subj,
       subj->backticks[numticks] = subj->pos - numticks;
     }
     if (numticks == openticklength) {
+      *newlines = nls;
+      if (nls) {
+        *since_newline = since_nl;
+      }
       return (subj->pos);
     }
   }
@@ -278,9 +290,10 @@ static bufsize_t scan_to_closing_backticks(subject *subj,
 // Parse backtick code section or raw backticks, return an inline.
 // Assumes that the subject has a backtick at the current position.
 static cmark_node *handle_backticks(subject *subj) {
+  int newlines, since_newline;
   cmark_chunk openticks = take_while(subj, isbacktick);
   bufsize_t startpos = subj->pos;
-  bufsize_t endpos = scan_to_closing_backticks(subj, openticks.len);
+  bufsize_t endpos = scan_to_closing_backticks(subj, openticks.len, &newlines, &since_newline);
 
   if (endpos == 0) {      // not found
     subj->pos = startpos; // rewind
@@ -293,7 +306,14 @@ static cmark_node *handle_backticks(subject *subj) {
     cmark_strbuf_trim(&buf);
     cmark_strbuf_normalize_whitespace(&buf);
 
-    return make_code(subj, startpos, endpos - openticks.len - 1, cmark_chunk_buf_detach(&buf));
+    cmark_node *node = make_code(subj, startpos, endpos - openticks.len - 1, cmark_chunk_buf_detach(&buf));
+    if (newlines) {
+      subj->line += newlines;
+      node->end_line += newlines;
+      node->end_column = since_newline;
+      subj->column_offset = -subj->pos + since_newline + openticks.len;
+    }
+    return node;
   }
 }
 
