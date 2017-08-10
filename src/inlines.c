@@ -230,6 +230,9 @@ static CMARK_INLINE cmark_chunk take_while(subject *subj, int (*f)(int)) {
   return cmark_chunk_dup(&subj->input, startpos, len);
 }
 
+// Return the number of newlines in a given span of text in a subject.  If
+// the number is greater than zero, also return the number of characters
+// between the last newline and the end of the span in `since_newline`.
 static int count_newlines(subject *subj, bufsize_t from, bufsize_t len, int *since_newline) {
   int nls = 0;
   int since_nl = 0;
@@ -250,6 +253,9 @@ static int count_newlines(subject *subj, bufsize_t from, bufsize_t len, int *sin
   return nls;
 }
 
+// Adjust `node`'s `end_line`, `end_column`, and `subj`'s `line` and
+// `column_offset` according to the number of newlines in a just-matched span
+// of text in `subj`.
 static void adjust_subj_node_newlines(subject *subj, cmark_node *node, int matchlen, int extra) {
   int since_newline;
   int newlines = count_newlines(subj, subj->pos - matchlen - extra, matchlen, &since_newline);
