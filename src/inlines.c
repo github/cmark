@@ -57,6 +57,8 @@ typedef struct subject{
   bool scanned_for_backticks;
 } subject;
 
+static int8_t SKIP_CHARS[];
+
 static CMARK_INLINE bool S_is_line_end_char(char c) {
   return (c == '\n' || c == '\r');
 }
@@ -356,12 +358,12 @@ static int scan_delims(subject *subj, unsigned char c, bool *can_open,
   } else {
     before_char_pos = subj->pos - 1;
     // walk back to the beginning of the UTF_8 sequence:
-    while ((peek_at(subj, before_char_pos) >> 6 == 2 || peek_at(subj, before_char_pos) == '~') && before_char_pos > 0) {
+    while ((peek_at(subj, before_char_pos) >> 6 == 2 || SKIP_CHARS[peek_at(subj, before_char_pos)]) && before_char_pos > 0) {
       before_char_pos -= 1;
     }
     len = cmark_utf8proc_iterate(subj->input.data + before_char_pos,
                                  subj->pos - before_char_pos, &before_char);
-    if (len == -1 || before_char == '~') {
+    if (len == -1 || SKIP_CHARS[before_char]) {
       before_char = 10;
     }
   }
@@ -380,12 +382,12 @@ static int scan_delims(subject *subj, unsigned char c, bool *can_open,
     after_char = 10;
   } else {
     after_char_pos = subj->pos;
-    while (peek_at(subj, after_char_pos) == '~' && after_char_pos < subj->input.len) {
+    while (SKIP_CHARS[peek_at(subj, after_char_pos)] && after_char_pos < subj->input.len) {
       after_char_pos += 1;
     }
     len = cmark_utf8proc_iterate(subj->input.data + after_char_pos,
                                  subj->input.len - after_char_pos, &after_char);
-    if (len == -1 || after_char == '~') {
+    if (len == -1 || SKIP_CHARS[after_char]) {
       after_char = 10;
     }
   }
@@ -1153,6 +1155,20 @@ static int8_t SPECIAL_CHARS[256] = {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+// Extensions may populate this.
+static int8_t SKIP_CHARS[256] = {
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
 // " ' . -
 static char SMART_PUNCT_CHARS[] = {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1183,11 +1199,11 @@ static bufsize_t subject_find_special_char(subject *subj, int options) {
 }
 
 void cmark_inlines_add_special_character(unsigned char c) {
-  SPECIAL_CHARS[c] = 1;
+  SPECIAL_CHARS[c] = SKIP_CHARS[c] = 1;
 }
 
 void cmark_inlines_remove_special_character(unsigned char c) {
-  SPECIAL_CHARS[c] = 0;
+  SPECIAL_CHARS[c] = SKIP_CHARS[c] = 0;
 }
 
 static cmark_node *try_extensions(cmark_parser *parser,
