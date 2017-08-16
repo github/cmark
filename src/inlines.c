@@ -375,7 +375,7 @@ static int scan_delims(subject *subj, unsigned char c, bool *can_open,
     }
     len = cmark_utf8proc_iterate(subj->input.data + before_char_pos,
                                  subj->pos - before_char_pos, &before_char);
-    if (len == -1 || SKIP_CHARS[before_char]) {
+    if (len == -1 || (before_char < 256 && SKIP_CHARS[(unsigned char) before_char])) {
       before_char = 10;
     }
   }
@@ -399,7 +399,7 @@ static int scan_delims(subject *subj, unsigned char c, bool *can_open,
     }
     len = cmark_utf8proc_iterate(subj->input.data + after_char_pos,
                                  subj->input.len - after_char_pos, &after_char);
-    if (len == -1 || SKIP_CHARS[after_char]) {
+    if (len == -1 || (after_char < 256 && SKIP_CHARS[(unsigned char) after_char])) {
       after_char = 10;
     }
   }
