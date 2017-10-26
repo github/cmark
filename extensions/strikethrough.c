@@ -89,6 +89,12 @@ static int can_contain(cmark_syntax_extension *extension, cmark_node *node,
   return CMARK_NODE_TYPE_INLINE_P(child_type);
 }
 
+static void plaintext_render(cmark_syntax_extension *extension,
+                              cmark_renderer *renderer, cmark_node *node,
+                              cmark_event_type ev_type, int options) {
+  renderer->out(renderer, node, "", false, LITERAL);
+}
+
 static void commonmark_render(cmark_syntax_extension *extension,
                               cmark_renderer *renderer, cmark_node *node,
                               cmark_event_type ev_type, int options) {
@@ -137,6 +143,7 @@ cmark_syntax_extension *create_strikethrough_extension(void) {
 
   cmark_syntax_extension_set_get_type_string_func(ext, get_type_string);
   cmark_syntax_extension_set_can_contain_func(ext, can_contain);
+  cmark_syntax_extension_set_plaintext_render_func(ext, plaintext_render);
   cmark_syntax_extension_set_commonmark_render_func(ext, commonmark_render);
   cmark_syntax_extension_set_latex_render_func(ext, latex_render);
   cmark_syntax_extension_set_man_render_func(ext, man_render);
