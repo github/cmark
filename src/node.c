@@ -21,6 +21,7 @@ bool cmark_node_can_contain_type(cmark_node *node, cmark_node_type child_type) {
   switch (node->type) {
   case CMARK_NODE_DOCUMENT:
   case CMARK_NODE_BLOCK_QUOTE:
+	case CMARK_NODE_FOOTNOTE_DEFINITION:
   case CMARK_NODE_ITEM:
     return CMARK_NODE_TYPE_BLOCK_P(child_type) && child_type != CMARK_NODE_ITEM;
 
