@@ -6,7 +6,6 @@ extern "C" {
 #endif
 
 #include <cmark.h>
-#include <stdbool.h>
 
 struct cmark_renderer;
 struct cmark_html_renderer;
@@ -273,7 +272,7 @@ CMARK_EXPORT
 cmark_node_type cmark_syntax_extension_add_node(int is_inline);
 
 CMARK_EXPORT
-void cmark_syntax_extension_set_emphasis(cmark_syntax_extension *extension, bool emphasis);
+void cmark_syntax_extension_set_emphasis(cmark_syntax_extension *extension, int emphasis);
 
 /** See the documentation for 'cmark_syntax_extension'
  */
@@ -702,7 +701,7 @@ int cmark_inline_parser_scan_delimiters(cmark_inline_parser *parser,
                                   int *punct_after);
 
 CMARK_EXPORT
-void cmark_manage_extensions_special_characters(cmark_parser *parser, bool add);
+void cmark_manage_extensions_special_characters(cmark_parser *parser, int add);
 
 CMARK_EXPORT
 cmark_llist *cmark_parser_get_syntax_extensions(cmark_parser *parser);
