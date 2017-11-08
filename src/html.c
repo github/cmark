@@ -373,9 +373,9 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
 
   case CMARK_NODE_FOOTNOTE_REFERENCE:
     if (entering) {
-      cmark_strbuf_puts(html, "(FNR: ");
+      cmark_strbuf_puts(html, "[^");
       cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
-      cmark_strbuf_puts(html, ")");
+      cmark_strbuf_puts(html, "]");
     }
     break;
 

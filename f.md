@@ -4,6 +4,8 @@ Here's a thing[^other-note].
 
 And another thing[^codeblock-note].
 
+This one doesn't even match[^nope].
+
 
 [^1]: Some *bolded* footnote definition.
 

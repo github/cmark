@@ -1094,7 +1094,6 @@ noMatch:
   if (opener->inl_text->next && opener->inl_text->next->type == CMARK_NODE_TEXT && !opener->inl_text->next->next) {
     cmark_chunk *literal = &opener->inl_text->next->as.literal;
     if (literal->len > 1 && literal->data[0] == '^') {
-      fprintf(stderr, "found footnote ref: {{%.*s}}\n", literal->len - 1, literal->data + 1);
       inl = make_simple(subj->mem, CMARK_NODE_FOOTNOTE_REFERENCE);
       inl->as.literal = cmark_chunk_dup(literal, 1, literal->len - 1);
       inl->start_line = inl->end_line = subj->line;

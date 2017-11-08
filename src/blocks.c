@@ -21,6 +21,7 @@
 #include "inlines.h"
 #include "houdini.h"
 #include "buffer.h"
+#include "footnotes.h"
 
 #define CODE_INDENT 4
 #define TAB_STOP 4
@@ -429,6 +430,32 @@ static void process_inlines(cmark_parser *parser,
   cmark_iter_free(iter);
 }
 
+static void process_footnotes(cmark_parser *parser) {
+  // * Collect definitions in a map.
+  // * Iterate the references in the document in order, assigning indices to
+  //   definitions in the order they're seen.
+  // * Write out the footnotes at the bottom of the document in index order.
+
+  // first iteration to use dumb structures
+  cmark_footnote_map *map = cmark_footnote_map_new(parser->mem);
+
+  cmark_iter *iter = cmark_iter_new(parser->root);
+  cmark_node *cur;
+  cmark_event_type ev_type;
+
+  while ((ev_type = cmark_iter_next(iter)) != CMARK_EVENT_DONE) {
+    cur = cmark_iter_get_node(iter);
+    if (ev_type == CMARK_EVENT_EXIT && cur->type == CMARK_NODE_FOOTNOTE_DEFINITION) {
+      cmark_node_unlink(cur);
+      fprintf(stderr, "uhm: %.*s\n", cur->as.literal.len, cur->as.literal.data);
+      cmark_footnote_create(map, cur);
+    }
+  }
+
+  cmark_iter_free(iter);
+  cmark_footnote_map_free(map);
+}
+
 // Attempts to parse a list item marker (bullet or enumerated).
 // On success, returns length of the marker, and populates
 // data with the details.  On failure, returns 0.
@@ -532,6 +559,7 @@ static cmark_node *finalize_document(cmark_parser *parser) {
   }
 
   finalize(parser, parser->root);
+  process_footnotes(parser);
   process_inlines(parser, parser->refmap, parser->options);
 
   return parser->root;
@@ -1042,8 +1070,16 @@ static void open_new_blocks(cmark_parser *parser, cmark_node **container,
       S_advance_offset(parser, input, input->len - 1 - parser->offset, false);
 		} else if (!indented &&
                (matched = scan_footnote_definition(input, parser->first_nonspace))) {
+      cmark_chunk c = cmark_chunk_dup(input, parser->first_nonspace + 2, matched);
+      cmark_chunk_to_cstr(parser->mem, &c);
+
+      while (c.data[c.len - 1] != ']')
+        --c.len;
+      --c.len;
+
       S_advance_offset(parser, input, parser->first_nonspace + matched - parser->offset, false);
       *container = add_child(parser, *container, CMARK_NODE_FOOTNOTE_DEFINITION, parser->first_nonspace + matched + 1);
+      (*container)->as.literal = c;
 
       (*container)->internal_offset = matched;
     } else if ((!indented || cont_type == CMARK_NODE_LIST) &&
