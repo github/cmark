@@ -436,7 +436,6 @@ static void process_footnotes(cmark_parser *parser) {
   //   definitions in the order they're seen.
   // * Write out the footnotes at the bottom of the document in index order.
 
-  // first iteration to use dumb structures
   cmark_footnote_map *map = cmark_footnote_map_new(parser->mem);
 
   cmark_iter *iter = cmark_iter_new(parser->root);
