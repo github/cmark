@@ -1095,6 +1095,17 @@ noMatch:
     cmark_chunk *literal = &opener->inl_text->next->as.literal;
     if (literal->len > 1 && literal->data[0] == '^') {
       fprintf(stderr, "found footnote ref: {{%.*s}}\n", literal->len - 1, literal->data + 1);
+      inl = make_simple(subj->mem, CMARK_NODE_FOOTNOTE_REFERENCE);
+      inl->as.literal = cmark_chunk_dup(literal, 1, literal->len - 1);
+      inl->start_line = inl->end_line = subj->line;
+      inl->start_column = opener->inl_text->start_column;
+      inl->end_column = subj->pos + subj->column_offset + subj->block_offset;
+      cmark_node_insert_before(opener->inl_text, inl);
+      cmark_node_free(opener->inl_text->next);
+      cmark_node_free(opener->inl_text);
+      process_emphasis(parser, subj, opener->previous_delimiter);
+      pop_bracket(subj);
+      return NULL;
     }
   }
   pop_bracket(subj); // remove this opener from delimiter list
