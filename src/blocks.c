@@ -761,16 +761,14 @@ static bool parse_block_quote_prefix(cmark_parser *parser, cmark_chunk *input) {
 
 static bool parse_footnote_definition_block_prefix(cmark_parser *parser, cmark_chunk *input,
                                                    cmark_node *container) {
-	fprintf(stderr, "checking input: {{%.*s}}\n", input->len, input->data);
+  if (parser->indent >= 4) {
+    S_advance_offset(parser, input, 4, true);
+    return true;
+  } else if (input->len > 0 && (input->data[0] == '\n' || (input->data[0] == '\r' && input->data[1] == '\n'))) {
+    return true;
+  }
 
-	if (parser->indent >= 4) {
-		S_advance_offset(parser, input, 4, true);
-		return true;
-	} else if (input->len > 0 && (input->data[0] == '\n' || (input->data[0] == '\r' && input->data[1] == '\n'))) {
-		return true;
-	}
-
-	return false;
+  return false;
 }
 
 static bool parse_node_item_prefix(cmark_parser *parser, cmark_chunk *input,
@@ -1043,11 +1041,11 @@ static void open_new_blocks(cmark_parser *parser, cmark_node **container,
                              parser->first_nonspace + 1);
       S_advance_offset(parser, input, input->len - 1 - parser->offset, false);
 		} else if (!indented &&
-							 (matched = scan_footnote_definition(input, parser->first_nonspace))) {
-			S_advance_offset(parser, input, parser->first_nonspace + matched - parser->offset, false);
-			*container = add_child(parser, *container, CMARK_NODE_FOOTNOTE_DEFINITION, parser->first_nonspace + matched + 1);
+               (matched = scan_footnote_definition(input, parser->first_nonspace))) {
+      S_advance_offset(parser, input, parser->first_nonspace + matched - parser->offset, false);
+      *container = add_child(parser, *container, CMARK_NODE_FOOTNOTE_DEFINITION, parser->first_nonspace + matched + 1);
 
-			(*container)->internal_offset = matched;
+      (*container)->internal_offset = matched;
     } else if ((!indented || cont_type == CMARK_NODE_LIST) &&
                (matched = parse_list_marker(
                     parser->mem, input, parser->first_nonspace,

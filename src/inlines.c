@@ -1089,7 +1089,14 @@ static cmark_node *handle_close_bracket(cmark_parser *parser, subject *subj) {
   }
 
 noMatch:
-  // If we fall through to here, it means we didn't match a link:
+  // If we fall through to here, it means we didn't match a link.
+	// What if we're a footnote link?
+  if (opener->inl_text->next && opener->inl_text->next->type == CMARK_NODE_TEXT && !opener->inl_text->next->next) {
+    cmark_chunk *literal = &opener->inl_text->next->as.literal;
+    if (literal->len > 1 && literal->data[0] == '^') {
+      fprintf(stderr, "found footnote ref: {{%.*s}}\n", literal->len - 1, literal->data + 1);
+    }
+  }
   pop_bracket(subj); // remove this opener from delimiter list
   subj->pos = initial_pos;
   return make_str(subj, subj->pos - 1, subj->pos - 1, cmark_chunk_literal("]"));

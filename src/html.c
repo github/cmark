@@ -363,13 +363,13 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
     }
     break;
 
-	case CMARK_NODE_FOOTNOTE_DEFINITION:
-		if (entering) {
-			cmark_strbuf_puts(html, "Footnote start:\n");
-		} else {
-			cmark_strbuf_puts(html, "Footnote end.\n\n");
-		}
-		break;
+  case CMARK_NODE_FOOTNOTE_DEFINITION:
+    if (entering) {
+      cmark_strbuf_puts(html, "Footnote start:\n");
+    } else {
+      cmark_strbuf_puts(html, "Footnote end.\n\n");
+    }
+    break;
 
   default:
     assert(false);

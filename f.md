@@ -16,5 +16,7 @@ And another thing[^codeblock-note].
 
 [^other-note]:       no code block here (spaces are stripped away)
 
+Not a footnote!
+
 [^codeblock-note]:
         this is now a code block (8 spaces indentation)
