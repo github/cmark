@@ -13,6 +13,7 @@ struct cmark_footnote {
   unsigned char *label;
   cmark_node *node;
   unsigned int age;
+  unsigned int ix;
 };
 
 typedef struct cmark_footnote cmark_footnote;
@@ -22,6 +23,7 @@ struct cmark_footnote_map {
   cmark_footnote *refs;
   cmark_footnote **sorted;
   unsigned int size;
+  unsigned int ix;
 };
 
 typedef struct cmark_footnote_map cmark_footnote_map;

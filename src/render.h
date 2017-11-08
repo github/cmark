@@ -36,6 +36,8 @@ struct cmark_html_renderer {
   cmark_strbuf *html;
   cmark_node *plain;
   cmark_llist *filter_extensions;
+  unsigned int footnote_ix;
+  unsigned int written_footnote_ix;
   void *opaque;
 };
 

@@ -9,7 +9,8 @@ static void footnote_free(cmark_footnote_map *map, cmark_footnote *ref) {
   cmark_mem *mem = map->mem;
   if (ref != NULL) {
     mem->free(ref->label);
-    cmark_node_free(ref->node);
+    if (ref->node)
+      cmark_node_free(ref->node);
     mem->free(ref);
   }
 }
@@ -125,7 +126,13 @@ cmark_footnote *cmark_footnote_lookup(cmark_footnote_map *map,
 
   ref = (cmark_footnote **)bsearch(norm, map->sorted, map->size, sizeof(cmark_footnote *), refsearch);
   map->mem->free(norm);
-  return ref ? ref[0] : NULL;
+
+  if (!ref)
+    return NULL;
+
+  if (!ref[0]->ix)
+    ref[0]->ix = ++map->ix;
+  return ref[0];
 }
 
 void cmark_footnote_map_free(cmark_footnote_map *map) {

@@ -447,12 +447,63 @@ static void process_footnotes(cmark_parser *parser) {
     cur = cmark_iter_get_node(iter);
     if (ev_type == CMARK_EVENT_EXIT && cur->type == CMARK_NODE_FOOTNOTE_DEFINITION) {
       cmark_node_unlink(cur);
-      fprintf(stderr, "uhm: %.*s\n", cur->as.literal.len, cur->as.literal.data);
       cmark_footnote_create(map, cur);
     }
   }
 
   cmark_iter_free(iter);
+  iter = cmark_iter_new(parser->root);
+
+  while ((ev_type = cmark_iter_next(iter)) != CMARK_EVENT_DONE) {
+    cur = cmark_iter_get_node(iter);
+    if (ev_type == CMARK_EVENT_EXIT && cur->type == CMARK_NODE_FOOTNOTE_REFERENCE) {
+      cmark_footnote *footnote = cmark_footnote_lookup(map, &cur->as.literal);
+      if (footnote) {
+        char n[32];
+        if (snprintf(n, 32, "%d", footnote->ix) >= 32) {
+          // We ran out of space.  This should be impossible given the number
+          // of digits in an unsigned int.
+        } else {
+          cmark_chunk_free(parser->mem, &cur->as.literal);
+          cmark_strbuf buf = CMARK_BUF_INIT(parser->mem);
+          cmark_strbuf_puts(&buf, n);
+
+          cur->as.literal = cmark_chunk_buf_detach(&buf);
+        }
+      } else {
+        cmark_node *text = (cmark_node *)parser->mem->calloc(1, sizeof(*text));
+        cmark_strbuf_init(parser->mem, &text->content, 0);
+        text->type = (uint16_t) CMARK_NODE_TEXT;
+
+        cmark_strbuf buf = CMARK_BUF_INIT(parser->mem);
+        cmark_strbuf_puts(&buf, "[^");
+        cmark_strbuf_put(&buf, cur->as.literal.data, cur->as.literal.len);
+        cmark_strbuf_putc(&buf, ']');
+
+        text->as.literal = cmark_chunk_buf_detach(&buf);
+        cmark_node_insert_after(cur, text);
+        cmark_node_free(cur);
+      }
+    }
+  }
+
+  cmark_iter_free(iter);
+
+  if (map->sorted) {
+    // this is exceedingly stupid:
+    unsigned int ix = 1;
+  loop:
+    for (cmark_footnote *footnote = map->refs; footnote; footnote = footnote->next) {
+      if (footnote->ix == ix) {
+        cmark_node_append_child(parser->root, footnote->node);
+        footnote->node = NULL;
+        ++ix;
+        goto loop;
+      }
+    }
+
+  }
+
   cmark_footnote_map_free(map);
 }
 
@@ -559,8 +610,8 @@ static cmark_node *finalize_document(cmark_parser *parser) {
   }
 
   finalize(parser, parser->root);
-  process_footnotes(parser);
   process_inlines(parser, parser->refmap, parser->options);
+  process_footnotes(parser);
 
   return parser->root;
 }
