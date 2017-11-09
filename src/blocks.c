@@ -612,7 +612,8 @@ static cmark_node *finalize_document(cmark_parser *parser) {
 
   finalize(parser, parser->root);
   process_inlines(parser, parser->refmap, parser->options);
-  process_footnotes(parser);
+  if (parser->options & CMARK_OPT_FOOTNOTES)
+    process_footnotes(parser);
 
   return parser->root;
 }
@@ -1120,7 +1121,8 @@ static void open_new_blocks(cmark_parser *parser, cmark_node **container,
       *container = add_child(parser, *container, CMARK_NODE_THEMATIC_BREAK,
                              parser->first_nonspace + 1);
       S_advance_offset(parser, input, input->len - 1 - parser->offset, false);
-		} else if (!indented &&
+    } else if (!indented &&
+               parser->options & CMARK_OPT_FOOTNOTES &&
                (matched = scan_footnote_definition(input, parser->first_nonspace))) {
       cmark_chunk c = cmark_chunk_dup(input, parser->first_nonspace + 2, matched);
       cmark_chunk_to_cstr(parser->mem, &c);

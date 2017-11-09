@@ -720,6 +720,10 @@ char *cmark_render_latex_with_mem(cmark_node *root, int options, int width, cmar
  */
 #define CMARK_OPT_LIBERAL_HTML_TAG (1 << 12)
 
+/** Parse footnotes.
+ */
+#define CMARK_OPT_FOOTNOTES (1 << 13)
+
 /**
  * ## Version information
  */
