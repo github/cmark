@@ -98,7 +98,7 @@ static void cmark_parser_dispose(cmark_parser *parser) {
     cmark_node_free(parser->root);
 
   if (parser->refmap)
-    cmark_reference_map_free(parser->refmap);
+    cmark_map_free(parser->refmap);
 }
 
 static void cmark_parser_reset(cmark_parser *parser) {
@@ -409,7 +409,7 @@ void cmark_manage_extensions_special_characters(cmark_parser *parser, int add) {
 // Walk through node and all children, recursively, parsing
 // string content into inline content where appropriate.
 static void process_inlines(cmark_parser *parser,
-                            cmark_reference_map *refmap, int options) {
+                            cmark_map *refmap, int options) {
   cmark_iter *iter = cmark_iter_new(parser->root);
   cmark_node *cur;
   cmark_event_type ev_type;
@@ -436,7 +436,7 @@ static void process_footnotes(cmark_parser *parser) {
   //   definitions in the order they're seen.
   // * Write out the footnotes at the bottom of the document in index order.
 
-  cmark_footnote_map *map = cmark_footnote_map_new(parser->mem);
+  cmark_map *map = cmark_footnote_map_new(parser->mem);
 
   cmark_iter *iter = cmark_iter_new(parser->root);
   cmark_node *cur;
@@ -452,12 +452,16 @@ static void process_footnotes(cmark_parser *parser) {
 
   cmark_iter_free(iter);
   iter = cmark_iter_new(parser->root);
+  unsigned int ix = 0;
 
   while ((ev_type = cmark_iter_next(iter)) != CMARK_EVENT_DONE) {
     cur = cmark_iter_get_node(iter);
     if (ev_type == CMARK_EVENT_EXIT && cur->type == CMARK_NODE_FOOTNOTE_REFERENCE) {
-      cmark_footnote *footnote = cmark_footnote_lookup(map, &cur->as.literal);
+      cmark_footnote *footnote = (cmark_footnote *)cmark_map_lookup(map, &cur->as.literal);
       if (footnote) {
+        if (!footnote->ix)
+          footnote->ix = ++ix;
+
         char n[32];
         if (snprintf(n, 32, "%d", footnote->ix) >= 32) {
           // We ran out of space.  This should be impossible given the number
@@ -492,7 +496,7 @@ static void process_footnotes(cmark_parser *parser) {
     // this is exceedingly stupid:
     unsigned int ix = 1;
   loop:
-    for (cmark_footnote *footnote = map->refs; footnote; footnote = footnote->next) {
+    for (cmark_footnote *footnote = (cmark_footnote *)map->refs; footnote; footnote = (cmark_footnote *)footnote->entry.next) {
       if (footnote->ix == ix) {
         cmark_node_append_child(parser->root, footnote->node);
         footnote->node = NULL;
@@ -503,7 +507,7 @@ static void process_footnotes(cmark_parser *parser) {
 
   }
 
-  cmark_footnote_map_free(map);
+  cmark_map_free(map);
 }
 
 // Attempts to parse a list item marker (bullet or enumerated).
