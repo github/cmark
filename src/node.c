@@ -109,6 +109,8 @@ static void free_node_as(cmark_node *node) {
     case CMARK_NODE_HTML_INLINE:
     case CMARK_NODE_CODE:
     case CMARK_NODE_HTML_BLOCK:
+    case CMARK_NODE_FOOTNOTE_REFERENCE:
+    case CMARK_NODE_FOOTNOTE_DEFINITION:
     cmark_chunk_free(NODE_MEM(node), &node->as.literal);
       break;
     case CMARK_NODE_LINK:
