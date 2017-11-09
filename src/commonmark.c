@@ -162,7 +162,7 @@ static cmark_node *get_containing_block(cmark_node *node) {
   return NULL;
 }
 
-static unsigned int ix;
+static unsigned int footnote_ix;
 
 static int S_render_node(cmark_renderer *renderer, cmark_node *node,
                          cmark_event_type ev_type, int options) {
@@ -475,10 +475,10 @@ static int S_render_node(cmark_renderer *renderer, cmark_node *node,
 
   case CMARK_NODE_FOOTNOTE_DEFINITION:
     if (entering) {
-      ix += 1;
+      footnote_ix += 1;
       LIT("[^");
       char n[32];
-      snprintf(n, sizeof(n), "%d", ix);
+      snprintf(n, sizeof(n), "%d", footnote_ix);
       OUT(n, false, LITERAL);
       LIT("]:\n");
 
@@ -506,6 +506,6 @@ char *cmark_render_commonmark_with_mem(cmark_node *root, int options, int width,
     // a different meaning with OPT_HARDBREAKS
     width = 0;
   }
-  ix = 0;
+  footnote_ix = 0;
   return cmark_render(mem, root, options, width, outc, S_render_node);
 }

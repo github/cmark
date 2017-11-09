@@ -430,6 +430,12 @@ static void process_inlines(cmark_parser *parser,
   cmark_iter_free(iter);
 }
 
+static int sort_footnote_by_ix(const void *_a, const void *_b) {
+  cmark_footnote *a = *(cmark_footnote **)_a;
+  cmark_footnote *b = *(cmark_footnote **)_b;
+  return (int)a->ix - (int)b->ix;
+}
+
 static void process_footnotes(cmark_parser *parser) {
   // * Collect definitions in a map.
   // * Iterate the references in the document in order, assigning indices to
@@ -489,18 +495,14 @@ static void process_footnotes(cmark_parser *parser) {
   cmark_iter_free(iter);
 
   if (map->sorted) {
-    // this is exceedingly stupid:
-    unsigned int ix = 1;
-  loop:
-    for (cmark_footnote *footnote = (cmark_footnote *)map->refs; footnote; footnote = (cmark_footnote *)footnote->entry.next) {
-      if (footnote->ix == ix) {
-        cmark_node_append_child(parser->root, footnote->node);
-        footnote->node = NULL;
-        ++ix;
-        goto loop;
-      }
+    qsort(map->sorted, map->size, sizeof(cmark_map_entry *), sort_footnote_by_ix);
+    for (unsigned int i = 0; i < map->size; ++i) {
+      cmark_footnote *footnote = (cmark_footnote *)map->sorted[i];
+      if (!footnote->ix)
+        continue;
+      cmark_node_append_child(parser->root, footnote->node);
+      footnote->node = NULL;
     }
-
   }
 
   cmark_map_free(map);
