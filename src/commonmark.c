@@ -478,11 +478,8 @@ static int S_render_node(cmark_renderer *renderer, cmark_node *node,
       ix += 1;
       LIT("[^");
       char n[32];
-      if (snprintf(n, 32, "%d", ix) >= 32) {
-        // ??
-      } else {
-        OUT(n, false, LITERAL);
-      }
+      snprintf(n, sizeof(n), "%d", ix);
+      OUT(n, false, LITERAL);
       LIT("]:\n");
 
       cmark_strbuf_puts(renderer->prefix, "    ");

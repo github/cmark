@@ -463,16 +463,12 @@ static void process_footnotes(cmark_parser *parser) {
           footnote->ix = ++ix;
 
         char n[32];
-        if (snprintf(n, 32, "%d", footnote->ix) >= 32) {
-          // We ran out of space.  This should be impossible given the number
-          // of digits in an unsigned int.
-        } else {
-          cmark_chunk_free(parser->mem, &cur->as.literal);
-          cmark_strbuf buf = CMARK_BUF_INIT(parser->mem);
-          cmark_strbuf_puts(&buf, n);
+        snprintf(n, sizeof(n), "%d", footnote->ix);
+        cmark_chunk_free(parser->mem, &cur->as.literal);
+        cmark_strbuf buf = CMARK_BUF_INIT(parser->mem);
+        cmark_strbuf_puts(&buf, n);
 
-          cur->as.literal = cmark_chunk_buf_detach(&buf);
-        }
+        cur->as.literal = cmark_chunk_buf_detach(&buf);
       } else {
         cmark_node *text = (cmark_node *)parser->mem->calloc(1, sizeof(*text));
         cmark_strbuf_init(parser->mem, &text->content, 0);

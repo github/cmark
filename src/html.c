@@ -66,11 +66,8 @@ static bool S_put_footnote_backref(cmark_html_renderer *renderer, cmark_strbuf *
 
   cmark_strbuf_puts(html, "<a href=\"#fnref");
   char n[32];
-  if (snprintf(n, 32, "%d", renderer->footnote_ix) >= 32) {
-    // ?
-  } else {
-    cmark_strbuf_puts(html, n);
-  }
+  snprintf(n, sizeof(n), "%d", renderer->footnote_ix);
+  cmark_strbuf_puts(html, n);
   cmark_strbuf_puts(html, "\" class=\"footnote-backref\">↩</a>");
 
   return true;
@@ -392,11 +389,8 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
       ++renderer->footnote_ix;
       cmark_strbuf_puts(html, "<li id=\"fn");
       char n[32];
-      if (snprintf(n, 32, "%d", renderer->footnote_ix) >= 32) {
-        // ?
-      } else {
-        cmark_strbuf_puts(html, n);
-      }
+      snprintf(n, sizeof(n), "%d", renderer->footnote_ix);
+      cmark_strbuf_puts(html, n);
       cmark_strbuf_puts(html, "\">\n");
     } else {
       if (S_put_footnote_backref(renderer, html)) {
