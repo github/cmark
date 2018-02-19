@@ -611,9 +611,9 @@ static void html_render(cmark_syntax_extension *extension,
           break;
 
       switch (alignments[i]) {
-      case 'l': cmark_strbuf_puts(html, " align=\"left\""); break;
-      case 'c': cmark_strbuf_puts(html, " align=\"center\""); break;
-      case 'r': cmark_strbuf_puts(html, " align=\"right\""); break;
+      case 'l': cmark_strbuf_puts(html, " style=\"text-align: left\""); break;
+      case 'c': cmark_strbuf_puts(html, " style=\"text-align: center\""); break;
+      case 'r': cmark_strbuf_puts(html, " style=\"text-align: right\""); break;
       }
 
       cmark_html_render_sourcepos(node, html, options);
