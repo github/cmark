@@ -176,20 +176,20 @@ fff | ggg | hhh | iii | jjj
 <table>
 <thead>
 <tr>
-<th align="left">aaa</th>
+<th style="text-align: left">aaa</th>
 <th>bbb</th>
-<th align="center">ccc</th>
+<th style="text-align: center">ccc</th>
 <th>ddd</th>
-<th align="right">eee</th>
+<th style="text-align: right">eee</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td align="left">fff</td>
+<td style="text-align: left">fff</td>
 <td>ggg</td>
-<td align="center">hhh</td>
+<td style="text-align: center">hhh</td>
 <td>iii</td>
-<td align="right">jjj</td>
+<td style="text-align: right">jjj</td>
 </tr></tbody></table>
 ````````````````````````````````
 
