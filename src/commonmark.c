@@ -31,24 +31,6 @@ static CMARK_INLINE void outc(cmark_renderer *renderer, cmark_node *node,
       cmark_isdigit(renderer->buffer->ptr[renderer->buffer->size - 1]);
   char encoded[ENCODED_SIZE];
 
-  needs_escaping =
-      c < 0x80 && escape != LITERAL &&
-      ((escape == NORMAL &&
-        (c == '*' || c == '_' || c == '[' || c == ']' || c == '#' || c == '<' ||
-         c == '>' || c == '\\' || c == '`' || c == '!' ||
-         (c == '&' && cmark_isalpha(nextc)) || (c == '!' && nextc == '[') ||
-         (renderer->begin_content && (c == '-' || c == '+' || c == '=') &&
-          // begin_content doesn't get set to false til we've passed digits
-          // at the beginning of line, so...
-          !follows_digit) ||
-         (renderer->begin_content && (c == '.' || c == ')') && follows_digit &&
-          (nextc == 0 || cmark_isspace(nextc))))) ||
-       (escape == URL &&
-        (c == '`' || c == '<' || c == '>' || cmark_isspace((char)c) || c == '\\' ||
-         c == ')' || c == '(')) ||
-       (escape == TITLE &&
-        (c == '`' || c == '<' || c == '>' || c == '"' || c == '\\')));
-
   if (needs_escaping) {
     if (cmark_isspace((char)c)) {
       // use percent encoding for spaces
@@ -331,7 +313,7 @@ static int S_render_node(cmark_renderer *renderer, cmark_node *node,
 
   case CMARK_NODE_THEMATIC_BREAK:
     BLANKLINE();
-    LIT("-----");
+    LIT("---");
     BLANKLINE();
     break;
 
