@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	dh_auto_build -- INSTALL_PREFIX=/usr
+
+# don't install the library unless/until someone needs it
+override_dh_auto_install:
+	dh_auto_install --destdir=debian/tmp
+
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
