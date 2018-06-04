@@ -1,6 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Contact: https://github.com/jgm/cmark
-Source: https://github.com/jgm/cmark/releases
+Upstream-Contact: https://github.com/commonmark/cmark
+Source: https://github.com/commonmark/cmark/releases
 
 Files: *
 Copyright: 2014, John MacFarlane
