@@ -203,6 +203,13 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
         cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, " lang=\"");
         escape_html(html, node->as.code.info.data, first_tag);
+        if (first_tag < node->as.code.info.len) {
+          size_t len = node->as.code.info.len - first_tag;
+          char dst[len];
+          memcpy(dst, node->as.code.info.data + first_tag, len);
+          cmark_strbuf_puts(html, "\" data-meta=\"");
+          escape_html(html, (unsigned char*)dst, node->as.code.info.len - first_tag);
+        }
         cmark_strbuf_puts(html, "\"><code>");
       } else {
         cmark_strbuf_puts(html, "<pre");
