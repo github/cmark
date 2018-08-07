@@ -198,17 +198,18 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
         first_tag += 1;
       }
 
+      bufsize_t len = node->as.code.info.len - first_tag;
+
       if (options & CMARK_OPT_GITHUB_PRE_LANG) {
         cmark_strbuf_puts(html, "<pre");
         cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, " lang=\"");
         escape_html(html, node->as.code.info.data, first_tag);
-        if (first_tag < node->as.code.info.len) {
-          size_t len = node->as.code.info.len - first_tag;
-          char dst[len];
-          memcpy(dst, node->as.code.info.data + first_tag, len);
+        if (first_tag < node->as.code.info.len && len > 0) {
+          char meta[len];
+          memcpy(meta, node->as.code.info.data + first_tag + 1, len - 1);
           cmark_strbuf_puts(html, "\" data-meta=\"");
-          escape_html(html, (unsigned char*)dst, node->as.code.info.len - first_tag);
+          escape_html(html, (unsigned char*)meta, node->as.code.info.len - first_tag - 1);
         }
         cmark_strbuf_puts(html, "\"><code>");
       } else {
@@ -216,6 +217,12 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
         cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, "><code class=\"language-");
         escape_html(html, node->as.code.info.data, first_tag);
+        if (first_tag < node->as.code.info.len && len > 0) {
+          char meta[len];
+          memcpy(meta, node->as.code.info.data + first_tag + 1, len - 1);
+          cmark_strbuf_puts(html, "\" data-meta=\"");
+          escape_html(html, (unsigned char*)meta, node->as.code.info.len - first_tag - 1);
+        }
         cmark_strbuf_puts(html, "\">");
       }
     }
