@@ -206,8 +206,8 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
         cmark_strbuf_puts(html, " lang=\"");
         escape_html(html, node->as.code.info.data, first_tag);
         if (first_tag < node->as.code.info.len && len > 0) {
-          char meta[len];
-          memcpy(meta, node->as.code.info.data + first_tag + 1, len - 1);
+          char meta[BUFFER_SIZE];
+          memcpy(meta, node->as.code.info.data + first_tag + 1, BUFFER_SIZE);
           cmark_strbuf_puts(html, "\" data-meta=\"");
           escape_html(html, (unsigned char*)meta, node->as.code.info.len - first_tag - 1);
         }
@@ -218,8 +218,8 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
         cmark_strbuf_puts(html, "><code class=\"language-");
         escape_html(html, node->as.code.info.data, first_tag);
         if (first_tag < node->as.code.info.len && len > 0) {
-          char meta[len];
-          memcpy(meta, node->as.code.info.data + first_tag + 1, len - 1);
+          char meta[BUFFER_SIZE];
+          memcpy(meta, node->as.code.info.data + first_tag + 1, BUFFER_SIZE);
           cmark_strbuf_puts(html, "\" data-meta=\"");
           escape_html(html, (unsigned char*)meta, node->as.code.info.len - first_tag - 1);
         }
