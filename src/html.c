@@ -198,14 +198,12 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
         first_tag += 1;
       }
 
-      bufsize_t len = node->as.code.info.len - first_tag;
-
       if (options & CMARK_OPT_GITHUB_PRE_LANG) {
         cmark_strbuf_puts(html, "<pre");
         cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, " lang=\"");
         escape_html(html, node->as.code.info.data, first_tag);
-        if (first_tag < node->as.code.info.len && len > 0) {
+        if (first_tag < node->as.code.info.len) {
           char meta[BUFFER_SIZE];
           memcpy(meta, node->as.code.info.data + first_tag + 1, BUFFER_SIZE);
           cmark_strbuf_puts(html, "\" data-meta=\"");
@@ -217,7 +215,7 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
         cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, "><code class=\"language-");
         escape_html(html, node->as.code.info.data, first_tag);
-        if (first_tag < node->as.code.info.len && len > 0) {
+        if (first_tag < node->as.code.info.len) {
           char meta[BUFFER_SIZE];
           memcpy(meta, node->as.code.info.data + first_tag + 1, BUFFER_SIZE);
           cmark_strbuf_puts(html, "\" data-meta=\"");
