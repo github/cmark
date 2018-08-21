@@ -9,7 +9,7 @@ extern "C" {
 #include <stdint.h>
 
 #include "cmark-gfm.h"
-#include "cmark_extension_api.h"
+#include "cmark-gfm-extension_api.h"
 #include "buffer.h"
 #include "chunk.h"
 

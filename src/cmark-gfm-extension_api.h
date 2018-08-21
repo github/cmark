@@ -1,5 +1,5 @@
-#ifndef CMARK_CMARK_EXTENSION_API_H
-#define CMARK_CMARK_EXTENSION_API_H
+#ifndef CMARK_GFM_EXTENSION_API_H
+#define CMARK_GFM_EXTENSION_API_H
 
 #ifdef __cplusplus
 extern "C" {

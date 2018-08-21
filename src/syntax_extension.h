@@ -2,7 +2,7 @@
 #define CMARK_SYNTAX_EXTENSION_H
 
 #include "cmark-gfm.h"
-#include "cmark_extension_api.h"
+#include "cmark-gfm-extension_api.h"
 #include "config.h"
 
 struct cmark_syntax_extension {

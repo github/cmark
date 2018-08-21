@@ -6,12 +6,12 @@
 #include "memory.h"
 #include "cmark-gfm.h"
 #include "node.h"
-#include "cmark_extension_api.h"
+#include "cmark-gfm-extension_api.h"
 #include "syntax_extension.h"
 #include "parser.h"
 #include "registry.h"
 
-#include "../extensions/core-extensions.h"
+#include "../extensions/cmark-gfm-core-extensions.h"
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <io.h>
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
   int options = CMARK_OPT_DEFAULT;
   int res = 1;
 
-  core_extensions_ensure_registered();
+  cmark_gfm_core_extensions_ensure_registered();
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
   _setmode(_fileno(stdin), _O_BINARY);

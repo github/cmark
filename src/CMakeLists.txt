@@ -8,7 +8,7 @@ set(LIBRARY "libcmark-gfm")
 set(STATICLIBRARY "libcmark-gfm_static")
 set(HEADERS
   cmark-gfm.h
-  cmark_extension_api.h
+  cmark-gfm-extension_api.h
   parser.h
   buffer.h
   node.h
@@ -78,9 +78,9 @@ add_executable(${PROGRAM} ${PROGRAM_SOURCES})
 add_compiler_export_flags()
 
 if(CMARK_SHARED)
-  target_link_libraries(${PROGRAM} libcmark-gfmextensions libcmark-gfm)
+  target_link_libraries(${PROGRAM} libcmark-gfm-extensions libcmark-gfm)
 elseif(CMARK_STATIC)
-  target_link_libraries(${PROGRAM} libcmark-gfmextensions_static libcmark-gfm_static)
+  target_link_libraries(${PROGRAM} libcmark-gfm-extensions_static libcmark-gfm_static)
 endif()
 
 # Disable the PUBLIC declarations when compiling the executable:
@@ -172,7 +172,7 @@ if(CMARK_SHARED OR CMARK_STATIC)
 
   install(FILES
     cmark-gfm.h
-    cmark_extension_api.h
+    cmark-gfm-extension_api.h
     ${CMAKE_CURRENT_BINARY_DIR}/cmark-gfm_export.h
     ${CMAKE_CURRENT_BINARY_DIR}/cmark-gfm_version.h
     DESTINATION include

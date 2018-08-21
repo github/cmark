@@ -5,7 +5,7 @@
 #define CMARK_NO_SHORT_NAMES
 #include "cmark-gfm.h"
 #include "node.h"
-#include "../extensions/core-extensions.h"
+#include "../extensions/cmark-gfm-core-extensions.h"
 
 #include "harness.h"
 #include "cplusplus.h"
