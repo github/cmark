@@ -3,7 +3,7 @@
 #include <string.h>
 
 #define CMARK_NO_SHORT_NAMES
-#include "cmark.h"
+#include "cmark-gfm.h"
 #include "node.h"
 #include "../extensions/core-extensions.h"
 

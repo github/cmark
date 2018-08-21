@@ -7,7 +7,7 @@ include(GNUInstallDirs)
 set(LIBRARY "libcmark-gfm")
 set(STATICLIBRARY "libcmark-gfm_static")
 set(HEADERS
-  cmark.h
+  cmark-gfm.h
   cmark_extension_api.h
   parser.h
   buffer.h
@@ -69,8 +69,8 @@ include_directories(
   ${PROJECT_BINARY_DIR}/extensions
 )
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmark_version.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/cmark_version.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmark-gfm_version.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/cmark-gfm_version.h)
 
 include (GenerateExportHeader)
 
@@ -171,10 +171,10 @@ if(CMARK_SHARED OR CMARK_STATIC)
     DESTINATION ${libdir}/pkgconfig)
 
   install(FILES
-    cmark.h
+    cmark-gfm.h
     cmark_extension_api.h
-    ${CMAKE_CURRENT_BINARY_DIR}/cmark_export.h
-    ${CMAKE_CURRENT_BINARY_DIR}/cmark_version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cmark-gfm_export.h
+    ${CMAKE_CURRENT_BINARY_DIR}/cmark-gfm_version.h
     DESTINATION include
     )
 

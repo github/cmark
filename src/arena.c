@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include "cmark.h"
+#include "cmark-gfm.h"
 #include "cmark_extension_api.h"
 
 static struct arena_chunk {
