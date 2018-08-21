@@ -1,5 +1,5 @@
-#ifndef CMARK_CMARK_H
-#define CMARK_CMARK_H
+#ifndef CMARK_GFM_H
+#define CMARK_GFM_H
 
 #include <stdio.h>
 #include <stdint.h>

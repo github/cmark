@@ -36,8 +36,8 @@ static void test_incomplete_char(test_batch_runner *runner, const char *utf8,
 static void test_continuation_byte(test_batch_runner *runner, const char *utf8);
 
 static void version(test_batch_runner *runner) {
-  INT_EQ(runner, cmark_version(), CMARK_VERSION, "cmark_version");
-  STR_EQ(runner, cmark_version_string(), CMARK_VERSION_STRING,
+  INT_EQ(runner, cmark_version(), CMARK_GFM_VERSION, "cmark_version");
+  STR_EQ(runner, cmark_version_string(), CMARK_GFM_VERSION_STRING,
          "cmark_version_string");
 }
 

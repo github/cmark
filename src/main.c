@@ -129,8 +129,8 @@ int main(int argc, char *argv[]) {
 
   for (i = 1; i < argc; i++) {
     if (strcmp(argv[i], "--version") == 0) {
-      printf("cmark-gfm %s", CMARK_VERSION_STRING);
-      printf(" - CommonMark converter\n(C) 2014-2016 John MacFarlane\n");
+      printf("cmark-gfm %s", CMARK_GFM_VERSION_STRING);
+      printf(" - CommonMark with GitHub Flavored Markdown converter\n(C) 2014-2016 John MacFarlane\n");
       goto success;
     } else if (strcmp(argv[i], "--list-extensions") == 0) {
       print_extensions();
