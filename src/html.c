@@ -4,7 +4,7 @@
 #include <assert.h>
 #include "cmark_ctype.h"
 #include "config.h"
-#include "cmark.h"
+#include "cmark-gfm.h"
 #include "houdini.h"
 #include "scanners.h"
 #include "syntax_extension.h"
@@ -203,12 +203,20 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
         cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, " lang=\"");
         escape_html(html, node->as.code.info.data, first_tag);
+        if (first_tag < node->as.code.info.len && (options & CMARK_OPT_FULL_INFO_STRING)) {
+          cmark_strbuf_puts(html, "\" data-meta=\"");
+          escape_html(html, node->as.code.info.data + first_tag + 1, node->as.code.info.len - first_tag - 1);
+        }
         cmark_strbuf_puts(html, "\"><code>");
       } else {
         cmark_strbuf_puts(html, "<pre");
         cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, "><code class=\"language-");
         escape_html(html, node->as.code.info.data, first_tag);
+        if (first_tag < node->as.code.info.len && (options & CMARK_OPT_FULL_INFO_STRING)) {
+          cmark_strbuf_puts(html, "\" data-meta=\"");
+          escape_html(html, node->as.code.info.data + first_tag + 1, node->as.code.info.len - first_tag - 1);
+        }
         cmark_strbuf_puts(html, "\">");
       }
     }
@@ -406,9 +414,9 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
       cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
       cmark_strbuf_puts(html, "\" id=\"fnref");
       cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
-      cmark_strbuf_puts(html, "\">[");
+      cmark_strbuf_puts(html, "\">");
       cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
-      cmark_strbuf_puts(html, "]</a></sup>");
+      cmark_strbuf_puts(html, "</a></sup>");
     }
     break;
 

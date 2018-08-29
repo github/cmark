@@ -51,7 +51,6 @@ static delimiter *insert(cmark_syntax_extension *self, cmark_parser *parser,
 
   cmark_node_set_syntax_extension(strikethrough, self);
 
-  cmark_node_set_string_content(strikethrough, "~");
   tmp = cmark_node_next(opener->inl_text);
 
   while (tmp) {
@@ -94,7 +93,7 @@ static int can_contain(cmark_syntax_extension *extension, cmark_node *node,
 static void commonmark_render(cmark_syntax_extension *extension,
                               cmark_renderer *renderer, cmark_node *node,
                               cmark_event_type ev_type, int options) {
-  renderer->out(renderer, node, cmark_node_get_string_content(node), false, LITERAL);
+  renderer->out(renderer, node, "~~", false, LITERAL);
 }
 
 static void latex_render(cmark_syntax_extension *extension,
@@ -133,6 +132,12 @@ static void html_render(cmark_syntax_extension *extension,
   }
 }
 
+static void plaintext_render(cmark_syntax_extension *extension,
+                             cmark_renderer *renderer, cmark_node *node,
+                             cmark_event_type ev_type, int options) {
+  renderer->out(renderer, node, "~", false, LITERAL);
+}
+
 cmark_syntax_extension *create_strikethrough_extension(void) {
   cmark_syntax_extension *ext = cmark_syntax_extension_new("strikethrough");
   cmark_llist *special_chars = NULL;
@@ -143,6 +148,7 @@ cmark_syntax_extension *create_strikethrough_extension(void) {
   cmark_syntax_extension_set_latex_render_func(ext, latex_render);
   cmark_syntax_extension_set_man_render_func(ext, man_render);
   cmark_syntax_extension_set_html_render_func(ext, html_render);
+  cmark_syntax_extension_set_plaintext_render_func(ext, plaintext_render);
   CMARK_NODE_STRIKETHROUGH = cmark_syntax_extension_add_node(1);
 
   cmark_syntax_extension_set_match_inline_func(ext, match);

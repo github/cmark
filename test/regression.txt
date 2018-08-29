@@ -126,3 +126,46 @@ ___this___
 <em><strong>this</strong></em><br />
 <em><strong>this</strong></em></p>
 ````````````````````````````````
+
+Issue #527 - meta tags in inline contexts
+
+```````````````````````````````` example
+City:
+<span itemprop="contentLocation" itemscope itemtype="https://schema.org/City">
+  <meta itemprop="name" content="Springfield">
+</span>
+.
+<p>City:
+<span itemprop="contentLocation" itemscope itemtype="https://schema.org/City">
+<meta itemprop="name" content="Springfield">
+</span></p>
+````````````````````````````````
+
+Issue kivikakk/comrak#80 - link parsing cases
+
+```````````````````````````````` example
+[a](\ b)
+
+[a](<<b)
+
+[a](<b
+)
+.
+<p>[a](\ b)</p>
+<p><a href="%3C%3Cb">a</a></p>
+<p><a href="%3Cb">a</a></p>
+````````````````````````````````
+
+cmark-gfm strikethrough rules
+
+```````````````````````````````` example strikethrough
+~Hi~ Hello, world!
+.
+<p><del>Hi</del> Hello, world!</p>
+````````````````````````````````
+
+```````````````````````````````` example strikethrough
+This ~text~~~~ is ~~~~curious~.
+.
+<p>This <del>text</del> is <del>curious</del>.</p>
+````````````````````````````````
