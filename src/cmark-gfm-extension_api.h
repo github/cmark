@@ -236,8 +236,8 @@ typedef int (*cmark_commonmark_escape_func) (cmark_syntax_extension *extension,
                                               cmark_node *node,
                                               int c);
 
-typedef char* (*cmark_xml_attr_func) (cmark_syntax_extension *extension,
-                                      cmark_node *node);
+typedef const char* (*cmark_xml_attr_func) (cmark_syntax_extension *extension,
+                                            cmark_node *node);
 
 typedef void (*cmark_html_render_func) (cmark_syntax_extension *extension,
                                         struct cmark_html_renderer *renderer,

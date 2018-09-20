@@ -52,11 +52,9 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
     }
 
     if (node->extension && node->extension->xml_attr_func) {
-      char* r = node->extension->xml_attr_func(node->extension, node);
-      if (r != NULL) {
+      const char* r = node->extension->xml_attr_func(node->extension, node);
+      if (r != NULL)
         cmark_strbuf_puts(xml, r);
-        free(r);
-      }
     }
 
     literal = false;

@@ -489,8 +489,8 @@ static void latex_render(cmark_syntax_extension *extension,
   }
 }
 
-static char *xml_attr(cmark_syntax_extension *extension,
-                      cmark_node *node) {
+static const char *xml_attr(cmark_syntax_extension *extension,
+                            cmark_node *node) {
   if (node->type == CMARK_NODE_TABLE_CELL) {
     if (cmark_gfm_extensions_get_table_row_is_header(node->parent)) {
       uint8_t *alignments = get_table_alignments(node->parent->parent);
@@ -500,9 +500,9 @@ static char *xml_attr(cmark_syntax_extension *extension,
         if (n == node)
           break;
       switch (alignments[i]) {
-      case 'l': return strdup(" align=\"left\"");
-      case 'c': return strdup(" align=\"center\"");
-      case 'r': return strdup(" align=\"right\"");
+      case 'l': return " align=\"left\"";
+      case 'c': return " align=\"center\"";
+      case 'r': return " align=\"right\"";
       }
     }
   }
