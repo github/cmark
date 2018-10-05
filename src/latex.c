@@ -409,7 +409,7 @@ static int S_render_node(cmark_renderer *renderer, cmark_node *node,
         LIT("\\url{");
         OUT(url, false, URL);
         LIT("}");
-        return 0; // Don't process further nodes to avoid double-rendering artefacts
+        return 0; // Don't process further nodes to avoid double-rendering artifacts
       case EMAIL_AUTOLINK:
         LIT("\\href{");
         OUT(url, false, URL);
