@@ -910,7 +910,7 @@ static void test_safe(test_batch_runner *runner) {
                                  "a>\n[link](JAVAscript:alert('hi'))\n![image]("
                                  "file:my.js)\n";
   char *html = cmark_markdown_to_html(raw_html, sizeof(raw_html) - 1,
-                                      CMARK_OPT_DEFAULT | CMARK_OPT_SAFE);
+                                      CMARK_OPT_DEFAULT);
   STR_EQ(runner, html, "<!-- raw HTML omitted -->\n<p><!-- raw HTML omitted "
                        "-->hi<!-- raw HTML omitted -->\n<a "
                        "href=\"\">link</a>\n<img src=\"\" alt=\"image\" "
