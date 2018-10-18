@@ -1,3 +1,28 @@
+[0.28.3.gfm.19]
+
+  * Prevent out-of-bound memory access in strikethrough matcher (Xavier Décoret, #124).
+  * Limit recursion in autolink extension (Xavier Décoret, #125).
+  * Add plaintext rendering for footnotes (Xavier Décoret, #126).
+
+[0.28.3.gfm.18]
+
+  * Match strikethrough more strictly (#120).
+  * Default to safe operation (#123).
+
+[0.28.3.gfm.17]
+
+  * Allow extension to provide opaque allocation function (Nicolás Ojeda
+    Bär, #89).
+  * Upstream optimisations and fixes.
+  * Extensions can add custom XML attributes (#116).
+  * Support for GFM extensions in cmark XML to CommonMark XSLT converter
+    (Maëlle Salmon, #117).
+
+[0.28.3.gfm.16]
+
+  * Do not percent-encode tildes (~) in HTML attribute values (#110).
+  * Fix footnote references in tables (#112).
+
 [0.28.3.gfm.15]
 
   * Escape non-strikethrough tildes (~) in commonmark output (John MacFarlane, #106).

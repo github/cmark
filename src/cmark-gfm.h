@@ -92,6 +92,7 @@ typedef enum {
 typedef struct cmark_node cmark_node;
 typedef struct cmark_parser cmark_parser;
 typedef struct cmark_iter cmark_iter;
+typedef struct cmark_syntax_extension cmark_syntax_extension;
 
 /**
  * ## Custom memory allocator support
@@ -186,6 +187,13 @@ CMARK_GFM_EXPORT cmark_node *cmark_node_new(cmark_node_type type);
  */
 CMARK_GFM_EXPORT cmark_node *cmark_node_new_with_mem(cmark_node_type type,
                                                  cmark_mem *mem);
+
+CMARK_GFM_EXPORT cmark_node *cmark_node_new_with_ext(cmark_node_type type,
+                                                cmark_syntax_extension *extension);
+
+CMARK_GFM_EXPORT cmark_node *cmark_node_new_with_mem_and_ext(cmark_node_type type,
+                                                cmark_mem *mem,
+                                                cmark_syntax_extension *extension);
 
 /** Frees the memory allocated for a node and any children.
  */
@@ -682,14 +690,6 @@ char *cmark_render_latex_with_mem(cmark_node *root, int options, int width, cmar
  */
 #define CMARK_OPT_HARDBREAKS (1 << 2)
 
-/** Suppress raw HTML and unsafe links (`javascript:`, `vbscript:`,
- * `file:`, and `data:`, except for `image/png`, `image/gif`,
- * `image/jpeg`, or `image/webp` mime types).  Raw HTML is replaced
- * by a placeholder HTML comment. Unsafe links are replaced by
- * empty strings.
- */
-#define CMARK_OPT_SAFE (1 << 3)
-
 /** Render `softbreak` elements as spaces.
  */
 #define CMARK_OPT_NOBREAKS (1 << 4)
@@ -737,6 +737,14 @@ char *cmark_render_latex_with_mem(cmark_node *root, int options, int width, cmar
  * a separate attribute.
  */
 #define CMARK_OPT_FULL_INFO_STRING (1 << 16)
+
+/** Allow raw HTML and unsafe links, `javascript:`, `vbscript:`, `file:`, and
+ * all `data:` URLs -- by default, only `image/png`, `image/gif`, `image/jpeg`,
+ * or `image/webp` mime types are allowed. Without this option, raw HTML is
+ * replaced by a placeholder HTML comment, and unsafe links are replaced by
+ * empty strings.
+ */
+#define CMARK_OPT_UNSAFE (1 << 17)
 
 /**
  * ## Version information

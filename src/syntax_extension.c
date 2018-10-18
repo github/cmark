@@ -97,6 +97,11 @@ void cmark_syntax_extension_set_latex_render_func(cmark_syntax_extension *extens
   extension->latex_render_func = func;
 }
 
+void cmark_syntax_extension_set_xml_attr_func(cmark_syntax_extension *extension,
+                                              cmark_xml_attr_func func) {
+  extension->xml_attr_func = func;
+}
+
 void cmark_syntax_extension_set_man_render_func(cmark_syntax_extension *extension,
                                                 cmark_common_render_func func) {
   extension->man_render_func = func;
@@ -126,6 +131,11 @@ void cmark_syntax_extension_set_private(cmark_syntax_extension *extension,
 
 void *cmark_syntax_extension_get_private(cmark_syntax_extension *extension) {
     return extension->priv;
+}
+
+void cmark_syntax_extension_set_opaque_alloc_func(cmark_syntax_extension *extension,
+                                                  cmark_opaque_alloc_func func) {
+  extension->opaque_alloc_func = func;
 }
 
 void cmark_syntax_extension_set_opaque_free_func(cmark_syntax_extension *extension,

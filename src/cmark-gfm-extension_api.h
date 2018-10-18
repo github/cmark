@@ -106,8 +106,6 @@ typedef struct cmark_plugin cmark_plugin;
  * with 'cmark_syntax_extension_set_private',
  * and optionally define a free function for this data.
  */
-typedef struct cmark_syntax_extension cmark_syntax_extension;
-
 typedef struct subject cmark_inline_parser;
 
 /** Exposed raw for now */
@@ -238,6 +236,9 @@ typedef int (*cmark_commonmark_escape_func) (cmark_syntax_extension *extension,
                                               cmark_node *node,
                                               int c);
 
+typedef const char* (*cmark_xml_attr_func) (cmark_syntax_extension *extension,
+                                            cmark_node *node);
+
 typedef void (*cmark_html_render_func) (cmark_syntax_extension *extension,
                                         struct cmark_html_renderer *renderer,
                                         cmark_node *node,
@@ -253,6 +254,10 @@ typedef cmark_node *(*cmark_postprocess_func) (cmark_syntax_extension *extension
                                                cmark_node *root);
 
 typedef int (*cmark_ispunct_func) (char c);
+
+typedef void (*cmark_opaque_alloc_func) (cmark_syntax_extension *extension,
+                                         cmark_mem *mem,
+                                         cmark_node *node);
 
 typedef void (*cmark_opaque_free_func) (cmark_syntax_extension *extension,
                                         cmark_mem *mem,
@@ -343,6 +348,12 @@ void cmark_syntax_extension_set_latex_render_func(cmark_syntax_extension *extens
 /** See the documentation for 'cmark_syntax_extension'
  */
 CMARK_GFM_EXPORT
+void cmark_syntax_extension_set_xml_attr_func(cmark_syntax_extension *extension,
+                                              cmark_xml_attr_func func);
+
+  /** See the documentation for 'cmark_syntax_extension'
+ */
+CMARK_GFM_EXPORT
 void cmark_syntax_extension_set_man_render_func(cmark_syntax_extension *extension,
                                                 cmark_common_render_func func);
 
@@ -381,6 +392,12 @@ void *cmark_syntax_extension_get_private(cmark_syntax_extension *extension);
 CMARK_GFM_EXPORT
 void cmark_syntax_extension_set_postprocess_func(cmark_syntax_extension *extension,
                                                  cmark_postprocess_func func);
+
+/** See the documentation for 'cmark_syntax_extension'
+ */
+CMARK_GFM_EXPORT
+void cmark_syntax_extension_set_opaque_alloc_func(cmark_syntax_extension *extension,
+                                                  cmark_opaque_alloc_func func);
 
 /** See the documentation for 'cmark_syntax_extension'
  */
