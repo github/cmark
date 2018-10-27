@@ -815,9 +815,7 @@ bufsize_t _scan_tasklist(const unsigned char *p) {
             goto yy84;
           goto yy83;
         } else {
-          if (yych <= '*')
-            goto yy85;
-          if (yych <= ',')
+          if (yych == ',')
             goto yy83;
           goto yy85;
         }
@@ -858,9 +856,11 @@ bufsize_t _scan_tasklist(const unsigned char *p) {
     if (yybm[0 + yych] & 128) {
       goto yy94;
     }
-    if (yych == '*')
-      goto yy96;
-    if (yych == '-')
+    if (yych <= ')')
+      goto yy82;
+    if (yych == ',')
+      goto yy82;
+    if (yych <= '-')
       goto yy96;
     goto yy82;
   yy85:
@@ -932,9 +932,11 @@ bufsize_t _scan_tasklist(const unsigned char *p) {
     if (yybm[0 + yych] & 128) {
       goto yy94;
     }
-    if (yych == '*')
-      goto yy96;
-    if (yych != '-')
+    if (yych <= ')')
+      goto yy87;
+    if (yych == ',')
+      goto yy87;
+    if (yych >= '.')
       goto yy87;
   yy96:
     yych = *++p;
