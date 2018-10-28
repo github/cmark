@@ -32,7 +32,7 @@ bufsize_t _ext_scan_at(bufsize_t (*scanner)(const unsigned char *), unsigned cha
   table_marker = (spacechar*[:]?[-]+[:]?spacechar*);
   table_cell = (escaped_char|[^|\r\n])*;
 
-  tasklist = spacechar*("-"|"+"|"*")spacechar+("[ ]"|"[x]")spacechar+;
+  tasklist = spacechar*("-"|"+"|"*"|[0-9]+.)spacechar+("[ ]"|"[x]")spacechar+;
 */
 
 bufsize_t _scan_table_start(const unsigned char *p)
