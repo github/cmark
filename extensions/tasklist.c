@@ -62,7 +62,7 @@ static cmark_node *open_tasklist_item(cmark_syntax_extension *self,
   cmark_node_set_syntax_extension(parent_container, self);
   cmark_parser_advance_offset(parser, (char *)input, 3, false);
 
-  cmark_tasklist_type userdata;
+  long userdata;
   if (strstr((char*)input, "[x]")) {
     userdata = CMARK_TASKLIST_CHECKED;
   } else {
@@ -79,7 +79,7 @@ static void commonmark_render(cmark_syntax_extension *extension,
   bool entering = (ev_type == CMARK_EVENT_ENTER);
   if (entering) {
     renderer->cr(renderer);
-    cmark_tasklist_type userdata = (cmark_tasklist_type)cmark_node_get_user_data(node);
+    long userdata = (long)cmark_node_get_user_data(node);
     if (userdata == CMARK_TASKLIST_CHECKED) {
       renderer->out(renderer, node, "- [x] ", false, LITERAL);
     } else {
@@ -99,7 +99,7 @@ static void html_render(cmark_syntax_extension *extension,
     cmark_strbuf_puts(renderer->html, "<li class='task-list-item'");
     cmark_html_render_sourcepos(node, renderer->html, options);
     cmark_strbuf_putc(renderer->html, '>');
-    cmark_tasklist_type userdata = (cmark_tasklist_type)cmark_node_get_user_data(node);
+    long userdata = (long)cmark_node_get_user_data(node);
     if (userdata == CMARK_TASKLIST_CHECKED) {
       cmark_strbuf_puts(renderer->html, "<input type='checkbox' checked='' disabled='' />");
     } else {
