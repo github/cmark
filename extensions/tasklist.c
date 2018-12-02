@@ -81,11 +81,13 @@ static void commonmark_render(cmark_syntax_extension *extension,
     renderer->cr(renderer);
     long userdata = (long)cmark_node_get_user_data(node);
     if (userdata == CMARK_TASKLIST_CHECKED) {
-      renderer->out(renderer, node, "- [x] ", false, LITERAL);
+      renderer->out(renderer, node, "  - [x] ", false, LITERAL);
     } else {
-      renderer->out(renderer, node, "- [ ] ", false, LITERAL);
+      renderer->out(renderer, node, "  - [ ] ", false, LITERAL);
     }
+    cmark_strbuf_puts(renderer->prefix, "    ");
   } else {
+    cmark_strbuf_truncate(renderer->prefix, renderer->prefix->size - 4);
     renderer->cr(renderer);
   }
 }
