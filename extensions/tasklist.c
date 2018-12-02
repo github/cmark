@@ -101,9 +101,9 @@ static void html_render(cmark_syntax_extension *extension,
     cmark_strbuf_putc(renderer->html, '>');
     long userdata = (long)cmark_node_get_user_data(node);
     if (userdata == CMARK_TASKLIST_CHECKED) {
-      cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" checked=\"\" disabled=\"\" />");
+      cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" checked=\"\" disabled=\"\" /> ");
     } else {
-      cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" disabled=\"\" />");
+      cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" disabled=\"\" /> ");
     }
   } else {
     cmark_strbuf_puts(renderer->html, "</li>\n");
