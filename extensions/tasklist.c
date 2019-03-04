@@ -14,10 +14,10 @@ static const char *get_type_string(cmark_syntax_extension *extension, cmark_node
 }
 
 char *cmark_gfm_extensions_get_tasklist_state(cmark_node *node) {
-  if (!node || (node->as.opaque != CMARK_TASKLIST_CHECKED && node->as.opaque != CMARK_TASKLIST_NOCHECKED))
+  if (!node || ((int)node->as.opaque != CMARK_TASKLIST_CHECKED && (int)node->as.opaque != CMARK_TASKLIST_NOCHECKED))
     return 0;
 
-  if (node->as.opaque != CMARK_TASKLIST_CHECKED) {
+  if ((int)node->as.opaque != CMARK_TASKLIST_CHECKED) {
     return "checked";
   }
   else {
@@ -75,9 +75,9 @@ static cmark_node *open_tasklist_item(cmark_syntax_extension *self,
   cmark_parser_advance_offset(parser, (char *)input, 3, false);
 
   if (strstr((char*)input, "[x]")) {
-    parent_container->as.opaque = CMARK_TASKLIST_CHECKED;
+    parent_container->as.opaque = (void *)CMARK_TASKLIST_CHECKED;
   } else {
-    parent_container->as.opaque = CMARK_TASKLIST_NOCHECKED;
+    parent_container->as.opaque = (void *)CMARK_TASKLIST_NOCHECKED;
   }
 
   return NULL;
@@ -89,7 +89,7 @@ static void commonmark_render(cmark_syntax_extension *extension,
   bool entering = (ev_type == CMARK_EVENT_ENTER);
   if (entering) {
     renderer->cr(renderer);
-    if (node->as.opaque == CMARK_TASKLIST_CHECKED) {
+    if ((int)node->as.opaque == CMARK_TASKLIST_CHECKED) {
       renderer->out(renderer, node, "- [x] ", false, LITERAL);
     } else {
       renderer->out(renderer, node, "- [ ] ", false, LITERAL);
@@ -110,7 +110,7 @@ static void html_render(cmark_syntax_extension *extension,
     cmark_strbuf_puts(renderer->html, "<li");
     cmark_html_render_sourcepos(node, renderer->html, options);
     cmark_strbuf_putc(renderer->html, '>');
-    if (node->as.opaque == CMARK_TASKLIST_CHECKED) {
+    if ((int)node->as.opaque == CMARK_TASKLIST_CHECKED) {
       cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" checked=\"\" disabled=\"\" /> ");
     } else {
       cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" disabled=\"\" /> ");
