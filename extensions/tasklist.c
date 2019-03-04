@@ -90,13 +90,13 @@ static void commonmark_render(cmark_syntax_extension *extension,
   if (entering) {
     renderer->cr(renderer);
     if (node->as.opaque == CMARK_TASKLIST_CHECKED) {
-      renderer->out(renderer, node, "  - [x] ", false, LITERAL);
+      renderer->out(renderer, node, "- [x] ", false, LITERAL);
     } else {
-      renderer->out(renderer, node, "  - [ ] ", false, LITERAL);
+      renderer->out(renderer, node, "- [ ] ", false, LITERAL);
     }
-    cmark_strbuf_puts(renderer->prefix, "    ");
+    cmark_strbuf_puts(renderer->prefix, "  ");
   } else {
-    cmark_strbuf_truncate(renderer->prefix, renderer->prefix->size - 4);
+    cmark_strbuf_truncate(renderer->prefix, renderer->prefix->size - 2);
     renderer->cr(renderer);
   }
 }
@@ -107,13 +107,13 @@ static void html_render(cmark_syntax_extension *extension,
   bool entering = (ev_type == CMARK_EVENT_ENTER);
   if (entering) {
     cmark_html_render_cr(renderer->html);
-    cmark_strbuf_puts(renderer->html, "<li class=\"task-list-item\"");
+    cmark_strbuf_puts(renderer->html, "<li");
     cmark_html_render_sourcepos(node, renderer->html, options);
     cmark_strbuf_putc(renderer->html, '>');
     if (node->as.opaque == CMARK_TASKLIST_CHECKED) {
-      cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" checked=\"\" disabled=\"\" />");
+      cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" checked=\"\" disabled=\"\" /> ");
     } else {
-      cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" disabled=\"\" />");
+      cmark_strbuf_puts(renderer->html, "<input type=\"checkbox\" disabled=\"\" /> ");
     }
   } else {
     cmark_strbuf_puts(renderer->html, "</li>\n");
