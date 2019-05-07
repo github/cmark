@@ -9759,7 +9759,7 @@ Line breaks do not occur inside code spans
 `code  
 span`
 .
-<p><code>code  span</code></p>
+<p><code>code   span</code></p>
 ````````````````````````````````
 
 
