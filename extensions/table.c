@@ -187,9 +187,10 @@ static void try_inserting_table_header_paragraph(cmark_parser *parser,
   paragraph_content = unescape_pipes(parser->mem, parent_string, paragraph_offset);
   cmark_strbuf_trim(paragraph_content);
   cmark_node_set_string_content(paragraph, (char *) paragraph_content->ptr);
+  cmark_strbuf_free(paragraph_content);
+  parser->mem->free(paragraph_content);
 
   if (!cmark_node_insert_before(parent_container, paragraph)) {
-    parser->mem->free(paragraph_content);
     parser->mem->free(paragraph);
   }
 }
