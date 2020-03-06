@@ -1,0 +1,5 @@
+module cmark_gfm {
+    umbrella header "cmark-gfm.h"
+
+    export *
+}
