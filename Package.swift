@@ -3,23 +3,28 @@
 import PackageDescription
 
 let package = Package(
-  name: "cmark_gfm",
-  products: [
-    .library(
-      name: "cmark_gfm",
-      targets: ["cmark_gfm"]),
-  ],
-  targets: [
-    .target(
-      name: "cmark_gfm",
-      path: "./",
-      // Exclude the main file so cmark is built as a library.
-      exclude: ["./src/main.c"],
-	  sources: ["./src/", "./extensions/"],
-	  cSettings: [
-		  .headerSearchPath("./src"),
-		  .headerSearchPath("./extensions")
-	  ]
-    )
-  ]
+    name: "cmark_gfm",
+    products: [
+        .library(
+            name: "cmark_gfm",
+            targets: ["cmark_gfm"]
+        ),
+    ],
+    targets: [
+        .target(
+            name: "cmark_gfm",
+            path: "./",
+            exclude: ["./src/main.c"],
+            sources: [
+                "./src",
+                "./extensions"
+            ],
+            publicHeadersPath: "./include/",
+            cSettings: [
+                .headerSearchPath("./include"),
+                .headerSearchPath("./src"),
+                .headerSearchPath("./extensions")
+            ]
+        )
+    ]
 )
