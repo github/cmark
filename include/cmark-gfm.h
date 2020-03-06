@@ -1,1 +1,5 @@
+#include "../src/node.h"
 #include "../src/cmark-gfm.h"
+#include "cmark-gfm-extensions_export.h"
+#include "cmark-gfm_export.h"
+#include "cmark-gfm_version.h"

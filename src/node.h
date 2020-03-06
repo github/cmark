@@ -1,4 +1,4 @@
-#ifndef CMARK_NODE_H
+// #ifndef CMARK_NODE_H
 #define CMARK_NODE_H
 
 #ifdef __cplusplus
@@ -115,4 +115,4 @@ CMARK_GFM_EXPORT bool cmark_node_can_contain_type(cmark_node *node, cmark_node_t
 }
 #endif
 
-#endif
+// #endif
