@@ -39,3 +39,5 @@ alltests.md
 progit/
 bench/benchinput.md
 test/afl_results/
+
+.build/
