@@ -30,11 +30,11 @@ OPTS = 0  # defaults
 
 # The GFM extensions that we want to use
 EXTENSIONS = (
-  'autolink',
-  'table',
-  'strikethrough',
-  'tagfilter',
-  )
+    'autolink',
+    'table',
+    'strikethrough',
+    'tagfilter',
+)
 
 # Use ctypes to access the functions in libcmark-gfm
 
@@ -83,27 +83,27 @@ F_register()
 
 
 def md2html(text):
-  "Use cmark-gfm to render the Markdown into an HTML fragment."
+    "Use cmark-gfm to render the Markdown into an HTML fragment."
 
-  parser = F_cmark_parser_new(OPTS)
-  assert parser
-  for name in EXTENSIONS:
-    ext = F_cmark_find_syntax_extension(name)
-    assert ext
-    rv = F_cmark_parser_attach_syntax_extension(parser, ext)
-    assert rv
-  exts = F_cmark_parser_get_syntax_extensions(parser)
+    parser = F_cmark_parser_new(OPTS)
+    assert parser
+    for name in EXTENSIONS:
+        ext = F_cmark_find_syntax_extension(name)
+        assert ext
+        rv = F_cmark_parser_attach_syntax_extension(parser, ext)
+        assert rv
+    exts = F_cmark_parser_get_syntax_extensions(parser)
 
-  F_cmark_parser_feed(parser, text, len(text))
-  doc = F_cmark_parser_finish(parser)
-  assert doc
+    F_cmark_parser_feed(parser, text, len(text))
+    doc = F_cmark_parser_finish(parser)
+    assert doc
 
-  output = F_cmark_render_html(doc, OPTS, exts)
+    output = F_cmark_render_html(doc, OPTS, exts)
 
-  F_cmark_parser_free(parser)
-  F_cmark_node_free(doc)
+    F_cmark_parser_free(parser)
+    F_cmark_node_free(doc)
 
-  return output
+    return output
 
 
 sys.stdout.write(md2html(sys.stdin.read()))
