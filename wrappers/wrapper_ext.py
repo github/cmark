@@ -11,12 +11,15 @@
 #
 
 import sys
+import platform
 import ctypes
 
-if sys.platform == 'darwin':
+sysname = platform.system()
+
+if sysname == 'Darwin':
     libname = 'libcmark-gfm.dylib'
     extname = 'libcmark-gfm-extensions.dylib'
-elif sys.platform == 'win32':
+elif sysname == 'Windows':
     libname = 'cmark-gfm.dll'
     extname = 'cmark-gfm-extensions.dll'
 else:
