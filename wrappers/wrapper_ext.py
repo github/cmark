@@ -11,12 +11,15 @@
 #
 
 import sys
+import platform
 import ctypes
 
-if sys.platform == 'darwin':
+sysname = platform.system()
+
+if sysname == 'Darwin':
     libname = 'libcmark-gfm.dylib'
     extname = 'libcmark-gfm-extensions.dylib'
-elif sys.platform == 'win32':
+elif sysname == 'Windows':
     libname = 'cmark-gfm.dll'
     extname = 'cmark-gfm-extensions.dll'
 else:
@@ -30,11 +33,11 @@ OPTS = 0  # defaults
 
 # The GFM extensions that we want to use
 EXTENSIONS = (
-  'autolink',
-  'table',
-  'strikethrough',
-  'tagfilter',
-  )
+    'autolink',
+    'table',
+    'strikethrough',
+    'tagfilter',
+)
 
 # Use ctypes to access the functions in libcmark-gfm
 
@@ -81,29 +84,44 @@ F_register.restype = None
 F_register.argtypes = ( )
 F_register()
 
+def encode(text):
+    if sys.version_info >= (3,0):
+        text = text.encode('utf-8')
+
+    return text
+
+
+def decode(text):
+    if sys.version_info >= (3,0):
+        text = text.decode('utf-8')
+
+    return text
+
 
 def md2html(text):
-  "Use cmark-gfm to render the Markdown into an HTML fragment."
+    "Use cmark-gfm to render the Markdown into an HTML fragment."
 
-  parser = F_cmark_parser_new(OPTS)
-  assert parser
-  for name in EXTENSIONS:
-    ext = F_cmark_find_syntax_extension(name)
-    assert ext
-    rv = F_cmark_parser_attach_syntax_extension(parser, ext)
-    assert rv
-  exts = F_cmark_parser_get_syntax_extensions(parser)
+    parser = F_cmark_parser_new(OPTS)
+    assert parser
+    for name in EXTENSIONS:
+        ext = F_cmark_find_syntax_extension(encode(name))
+        assert ext
+        rv = F_cmark_parser_attach_syntax_extension(parser, ext)
+        assert rv
+    exts = F_cmark_parser_get_syntax_extensions(parser)
 
-  F_cmark_parser_feed(parser, text, len(text))
-  doc = F_cmark_parser_finish(parser)
-  assert doc
+    text = encode(text)
+    F_cmark_parser_feed(parser, text, len(text))
 
-  output = F_cmark_render_html(doc, OPTS, exts)
+    doc = F_cmark_parser_finish(parser)
+    assert doc
 
-  F_cmark_parser_free(parser)
-  F_cmark_node_free(doc)
+    output = F_cmark_render_html(doc, OPTS, exts)
 
-  return output
+    F_cmark_parser_free(parser)
+    F_cmark_node_free(doc)
+
+    return decode(output)
 
 
 sys.stdout.write(md2html(sys.stdin.read()))
