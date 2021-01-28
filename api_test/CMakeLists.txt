@@ -7,12 +7,11 @@ add_executable(api_test
 include_directories(
   ${PROJECT_SOURCE_DIR}/src
   ${PROJECT_BINARY_DIR}/src
-  ${PROJECT_BINARY_DIR}/extensions
 )
 if(CMARK_SHARED)
-  target_link_libraries(api_test libcmark-gfm-extensions libcmark-gfm)
+  target_link_libraries(api_test libcmark)
 else()
-  target_link_libraries(api_test libcmark-gfm-extensions_static libcmark-gfm_static)
+  target_link_libraries(api_test libcmark_static)
 endif()
 
 # Compiler flags

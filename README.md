@@ -1,19 +1,13 @@
-cmark-gfm
-=========
+cmark
+=====
 
-[![Build Status]](https://travis-ci.org/github/cmark-gfm)
-[![Windows Build Status]](https://ci.appveyor.com/project/github/cmark)
+[![Build Status]](https://travis-ci.org/commonmark/cmark)
+[![Windows Build Status]](https://ci.appveyor.com/project/jgm/cmark-0ub06)
 
-`cmark-gfm` is an extended version of the C reference implementation of
-[CommonMark], a rationalized version of Markdown syntax with a spec.  This
-repository adds GitHub Flavored Markdown extensions to
-[the upstream implementation], as defined in [the spec].
-
-The rest of the README is preserved as-is from the upstream source.  Note that
-the library and binaries produced by this fork are suffixed with `-gfm` in
-order to distinguish them from the upstream.
-
----
+`cmark` is the C reference implementation of [CommonMark], a
+rationalized version of Markdown syntax with a [spec][the spec].
+(For the JavaScript reference implementation, see
+[commonmark.js].)
 
 It provides a shared library (`libcmark`) with functions for parsing
 CommonMark documents to an abstract syntax tree (AST), manipulating
@@ -65,10 +59,8 @@ There are also libraries that wrap `libcmark` for
 [Lua](https://github.com/jgm/cmark-lua),
 [Perl](https://metacpan.org/release/CommonMark),
 [Python](https://pypi.python.org/pypi/paka.cmark),
-[R](https://cran.r-project.org/package=commonmark),
-[Tcl](https://github.com/apnadkarni/tcl-cmark),
-[Scala](https://github.com/sparsetech/cmark-scala) and
-[Node.js](https://github.com/killa123/node-cmark).
+[R](https://cran.r-project.org/package=commonmark) and
+[Scala](https://github.com/sparsetech/cmark-scala).
 
 Installing
 ----------
@@ -164,14 +156,14 @@ be found in the man pages in the `man` subdirectory.
 Security
 --------
 
-By default, the library will scrub raw HTML and potentially
+By default, the library will pass through raw HTML and potentially
 dangerous links (`javascript:`, `vbscript:`, `data:`, `file:`).
 
-To allow these, use the option `CMARK_OPT_UNSAFE` (or
-`--unsafe`) with the command line program. If doing so, we
-recommend you use a HTML sanitizer specific to your needs to
-protect against [XSS
-attacks](http://en.wikipedia.org/wiki/Cross-site_scripting).
+It is recommended that users either disable this potentially unsafe
+feature by using the option `CMARK_OPT_SAFE` (or `--safe` with the
+command-line program), or run the output through an HTML sanitizer
+to protect against
+[XSS attacks](http://en.wikipedia.org/wiki/Cross-site_scripting).
 
 Contributing
 ------------
@@ -195,13 +187,12 @@ Nick Wellnhofer contributed many improvements, including
 most of the C library's API and its test harness.
 
 [benchmarks]: benchmarks.md
-[the spec]: https://github.github.com/gfm/
-[the upstream implementation]: https://github.com/jgm/cmark
+[the spec]: http://spec.commonmark.org
 [CommonMark]: http://commonmark.org
 [cmake]: http://www.cmake.org/download/
 [re2c]: http://re2c.org
 [commonmark.js]: https://github.com/commonmark/commonmark.js
-[Build Status]: https://img.shields.io/travis/github/cmark-gfm/master.svg?style=flat
-[Windows Build Status]: https://ci.appveyor.com/api/projects/status/wv7ifhqhv5itm3d5?svg=true
+[Build Status]: https://img.shields.io/travis/commonmark/cmark/master.svg?style=flat
+[Windows Build Status]: https://ci.appveyor.com/api/projects/status/h3fd91vtd1xfmp69?svg=true
 [american fuzzy lop]: http://lcamtuf.coredump.cx/afl/
 [libFuzzer]: http://llvm.org/docs/LibFuzzer.html
