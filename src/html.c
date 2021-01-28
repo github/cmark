@@ -4,13 +4,12 @@
 #include <assert.h>
 #include "cmark_ctype.h"
 #include "config.h"
-#include "cmark.h"
-#include "node.h"
-#include "buffer.h"
+#include "cmark-gfm.h"
 #include "houdini.h"
 #include "scanners.h"
-
-#define BUFFER_SIZE 100
+#include "syntax_extension.h"
+#include "html.h"
+#include "render.h"
 
 // Functions to convert cmark_nodes to HTML strings.
 
@@ -19,44 +18,81 @@ static void escape_html(cmark_strbuf *dest, const unsigned char *source,
   houdini_escape_html0(dest, source, length, 0);
 }
 
-static CMARK_INLINE void cr(cmark_strbuf *html) {
-  if (html->size && html->ptr[html->size - 1] != '\n')
-    cmark_strbuf_putc(html, '\n');
-}
+static void filter_html_block(cmark_html_renderer *renderer, uint8_t *data, size_t len) {
+  cmark_strbuf *html = renderer->html;
+  cmark_llist *it;
+  cmark_syntax_extension *ext;
+  bool filtered;
+  uint8_t *match;
 
-struct render_state {
-  cmark_strbuf *html;
-  cmark_node *plain;
-};
+  while (len) {
+    match = (uint8_t *) memchr(data, '<', len);
+    if (!match)
+      break;
 
-static void S_render_sourcepos(cmark_node *node, cmark_strbuf *html,
-                               int options) {
-  char buffer[BUFFER_SIZE];
-  if (CMARK_OPT_SOURCEPOS & options) {
-    snprintf(buffer, BUFFER_SIZE, " data-sourcepos=\"%d:%d-%d:%d\"",
-             cmark_node_get_start_line(node), cmark_node_get_start_column(node),
-             cmark_node_get_end_line(node), cmark_node_get_end_column(node));
-    cmark_strbuf_puts(html, buffer);
+    if (match != data) {
+      cmark_strbuf_put(html, data, (bufsize_t)(match - data));
+      len -= (match - data);
+      data = match;
+    }
+
+    filtered = false;
+    for (it = renderer->filter_extensions; it; it = it->next) {
+      ext = ((cmark_syntax_extension *) it->data);
+      if (!ext->html_filter_func(ext, data, len)) {
+        filtered = true;
+        break;
+      }
+    }
+
+    if (!filtered) {
+      cmark_strbuf_putc(html, '<');
+    } else {
+      cmark_strbuf_puts(html, "&lt;");
+    }
+
+    ++data;
+    --len;
   }
+
+  if (len)
+    cmark_strbuf_put(html, data, (bufsize_t)len);
 }
 
-static int S_render_node(cmark_node *node, cmark_event_type ev_type,
-                         struct render_state *state, int options) {
+static bool S_put_footnote_backref(cmark_html_renderer *renderer, cmark_strbuf *html) {
+  if (renderer->written_footnote_ix >= renderer->footnote_ix)
+    return false;
+  renderer->written_footnote_ix = renderer->footnote_ix;
+
+  cmark_strbuf_puts(html, "<a href=\"#fnref");
+  char n[32];
+  snprintf(n, sizeof(n), "%d", renderer->footnote_ix);
+  cmark_strbuf_puts(html, n);
+  cmark_strbuf_puts(html, "\" class=\"footnote-backref\">↩</a>");
+
+  return true;
+}
+
+static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
+                         cmark_event_type ev_type, int options) {
   cmark_node *parent;
   cmark_node *grandparent;
-  cmark_strbuf *html = state->html;
+  cmark_strbuf *html = renderer->html;
+  cmark_llist *it;
+  cmark_syntax_extension *ext;
   char start_heading[] = "<h0";
   char end_heading[] = "</h0";
   bool tight;
+  bool filtered;
   char buffer[BUFFER_SIZE];
 
   bool entering = (ev_type == CMARK_EVENT_ENTER);
 
-  if (state->plain == node) { // back at original node
-    state->plain = NULL;
+  if (renderer->plain == node) { // back at original node
+    renderer->plain = NULL;
   }
 
-  if (state->plain != NULL) {
+  if (renderer->plain != NULL) {
     switch (node->type) {
     case CMARK_NODE_TEXT:
     case CMARK_NODE_CODE:
@@ -75,18 +111,23 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
     return 1;
   }
 
+  if (node->extension && node->extension->html_render_func) {
+    node->extension->html_render_func(node->extension, renderer, node, ev_type, options);
+    return 1;
+  }
+
   switch (node->type) {
   case CMARK_NODE_DOCUMENT:
     break;
 
   case CMARK_NODE_BLOCK_QUOTE:
     if (entering) {
-      cr(html);
+      cmark_html_render_cr(html);
       cmark_strbuf_puts(html, "<blockquote");
-      S_render_sourcepos(node, html, options);
+      cmark_html_render_sourcepos(node, html, options);
       cmark_strbuf_puts(html, ">\n");
     } else {
-      cr(html);
+      cmark_html_render_cr(html);
       cmark_strbuf_puts(html, "</blockquote>\n");
     }
     break;
@@ -96,19 +137,19 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
     int start = node->as.list.start;
 
     if (entering) {
-      cr(html);
+      cmark_html_render_cr(html);
       if (list_type == CMARK_BULLET_LIST) {
         cmark_strbuf_puts(html, "<ul");
-        S_render_sourcepos(node, html, options);
+        cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, ">\n");
       } else if (start == 1) {
         cmark_strbuf_puts(html, "<ol");
-        S_render_sourcepos(node, html, options);
+        cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, ">\n");
       } else {
         snprintf(buffer, BUFFER_SIZE, "<ol start=\"%d\"", start);
         cmark_strbuf_puts(html, buffer);
-        S_render_sourcepos(node, html, options);
+        cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_puts(html, ">\n");
       }
     } else {
@@ -120,9 +161,9 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
 
   case CMARK_NODE_ITEM:
     if (entering) {
-      cr(html);
+      cmark_html_render_cr(html);
       cmark_strbuf_puts(html, "<li");
-      S_render_sourcepos(node, html, options);
+      cmark_html_render_sourcepos(node, html, options);
       cmark_strbuf_putc(html, '>');
     } else {
       cmark_strbuf_puts(html, "</li>\n");
@@ -131,10 +172,10 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
 
   case CMARK_NODE_HEADING:
     if (entering) {
-      cr(html);
+      cmark_html_render_cr(html);
       start_heading[2] = (char)('0' + node->as.heading.level);
       cmark_strbuf_puts(html, start_heading);
-      S_render_sourcepos(node, html, options);
+      cmark_html_render_sourcepos(node, html, options);
       cmark_strbuf_putc(html, '>');
     } else {
       end_heading[3] = (char)('0' + node->as.heading.level);
@@ -144,11 +185,11 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
     break;
 
   case CMARK_NODE_CODE_BLOCK:
-    cr(html);
+    cmark_html_render_cr(html);
 
     if (node->as.code.info.len == 0) {
       cmark_strbuf_puts(html, "<pre");
-      S_render_sourcepos(node, html, options);
+      cmark_html_render_sourcepos(node, html, options);
       cmark_strbuf_puts(html, "><code>");
     } else {
       bufsize_t first_tag = 0;
@@ -157,11 +198,27 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
         first_tag += 1;
       }
 
-      cmark_strbuf_puts(html, "<pre");
-      S_render_sourcepos(node, html, options);
-      cmark_strbuf_puts(html, "><code class=\"language-");
-      escape_html(html, node->as.code.info.data, first_tag);
-      cmark_strbuf_puts(html, "\">");
+      if (options & CMARK_OPT_GITHUB_PRE_LANG) {
+        cmark_strbuf_puts(html, "<pre");
+        cmark_html_render_sourcepos(node, html, options);
+        cmark_strbuf_puts(html, " lang=\"");
+        escape_html(html, node->as.code.info.data, first_tag);
+        if (first_tag < node->as.code.info.len && (options & CMARK_OPT_FULL_INFO_STRING)) {
+          cmark_strbuf_puts(html, "\" data-meta=\"");
+          escape_html(html, node->as.code.info.data + first_tag + 1, node->as.code.info.len - first_tag - 1);
+        }
+        cmark_strbuf_puts(html, "\"><code>");
+      } else {
+        cmark_strbuf_puts(html, "<pre");
+        cmark_html_render_sourcepos(node, html, options);
+        cmark_strbuf_puts(html, "><code class=\"language-");
+        escape_html(html, node->as.code.info.data, first_tag);
+        if (first_tag < node->as.code.info.len && (options & CMARK_OPT_FULL_INFO_STRING)) {
+          cmark_strbuf_puts(html, "\" data-meta=\"");
+          escape_html(html, node->as.code.info.data + first_tag + 1, node->as.code.info.len - first_tag - 1);
+        }
+        cmark_strbuf_puts(html, "\">");
+      }
     }
 
     escape_html(html, node->as.code.literal.data, node->as.code.literal.len);
@@ -169,17 +226,19 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
     break;
 
   case CMARK_NODE_HTML_BLOCK:
-    cr(html);
-    if (options & CMARK_OPT_SAFE) {
+    cmark_html_render_cr(html);
+    if (!(options & CMARK_OPT_UNSAFE)) {
       cmark_strbuf_puts(html, "<!-- raw HTML omitted -->");
+    } else if (renderer->filter_extensions) {
+      filter_html_block(renderer, node->as.literal.data, node->as.literal.len);
     } else {
       cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
     }
-    cr(html);
+    cmark_html_render_cr(html);
     break;
 
   case CMARK_NODE_CUSTOM_BLOCK:
-    cr(html);
+    cmark_html_render_cr(html);
     if (entering) {
       cmark_strbuf_put(html, node->as.custom.on_enter.data,
                        node->as.custom.on_enter.len);
@@ -187,13 +246,13 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
       cmark_strbuf_put(html, node->as.custom.on_exit.data,
                        node->as.custom.on_exit.len);
     }
-    cr(html);
+    cmark_html_render_cr(html);
     break;
 
   case CMARK_NODE_THEMATIC_BREAK:
-    cr(html);
+    cmark_html_render_cr(html);
     cmark_strbuf_puts(html, "<hr");
-    S_render_sourcepos(node, html, options);
+    cmark_html_render_sourcepos(node, html, options);
     cmark_strbuf_puts(html, " />\n");
     break;
 
@@ -207,11 +266,15 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
     }
     if (!tight) {
       if (entering) {
-        cr(html);
+        cmark_html_render_cr(html);
         cmark_strbuf_puts(html, "<p");
-        S_render_sourcepos(node, html, options);
+        cmark_html_render_sourcepos(node, html, options);
         cmark_strbuf_putc(html, '>');
       } else {
+        if (parent->type == CMARK_NODE_FOOTNOTE_DEFINITION && node->next == NULL) {
+          cmark_strbuf_putc(html, ' ');
+          S_put_footnote_backref(renderer, html);
+        }
         cmark_strbuf_puts(html, "</p>\n");
       }
     }
@@ -242,10 +305,23 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
     break;
 
   case CMARK_NODE_HTML_INLINE:
-    if (options & CMARK_OPT_SAFE) {
+    if (!(options & CMARK_OPT_UNSAFE)) {
       cmark_strbuf_puts(html, "<!-- raw HTML omitted -->");
     } else {
-      cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
+      filtered = false;
+      for (it = renderer->filter_extensions; it; it = it->next) {
+        ext = (cmark_syntax_extension *) it->data;
+        if (!ext->html_filter_func(ext, node->as.literal.data, node->as.literal.len)) {
+          filtered = true;
+          break;
+        }
+      }
+      if (!filtered) {
+        cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
+      } else {
+        cmark_strbuf_puts(html, "&lt;");
+        cmark_strbuf_put(html, node->as.literal.data + 1, node->as.literal.len - 1);
+      }
     }
     break;
 
@@ -278,8 +354,8 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
   case CMARK_NODE_LINK:
     if (entering) {
       cmark_strbuf_puts(html, "<a href=\"");
-      if (!((options & CMARK_OPT_SAFE) &&
-            scan_dangerous_url(&node->as.link.url, 0))) {
+      if ((options & CMARK_OPT_UNSAFE) ||
+            !(scan_dangerous_url(&node->as.link.url, 0))) {
         houdini_escape_href(html, node->as.link.url.data,
                             node->as.link.url.len);
       }
@@ -296,13 +372,13 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
   case CMARK_NODE_IMAGE:
     if (entering) {
       cmark_strbuf_puts(html, "<img src=\"");
-      if (!((options & CMARK_OPT_SAFE) &&
-            scan_dangerous_url(&node->as.link.url, 0))) {
+      if ((options & CMARK_OPT_UNSAFE) ||
+            !(scan_dangerous_url(&node->as.link.url, 0))) {
         houdini_escape_href(html, node->as.link.url.data,
                             node->as.link.url.len);
       }
       cmark_strbuf_puts(html, "\" alt=\"");
-      state->plain = node;
+      renderer->plain = node;
     } else {
       if (node->as.link.title.len) {
         cmark_strbuf_puts(html, "\" title=\"");
@@ -313,28 +389,76 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
     }
     break;
 
+  case CMARK_NODE_FOOTNOTE_DEFINITION:
+    if (entering) {
+      if (renderer->footnote_ix == 0) {
+        cmark_strbuf_puts(html, "<section class=\"footnotes\">\n<ol>\n");
+      }
+      ++renderer->footnote_ix;
+      cmark_strbuf_puts(html, "<li id=\"fn");
+      char n[32];
+      snprintf(n, sizeof(n), "%d", renderer->footnote_ix);
+      cmark_strbuf_puts(html, n);
+      cmark_strbuf_puts(html, "\">\n");
+    } else {
+      if (S_put_footnote_backref(renderer, html)) {
+        cmark_strbuf_putc(html, '\n');
+      }
+      cmark_strbuf_puts(html, "</li>\n");
+    }
+    break;
+
+  case CMARK_NODE_FOOTNOTE_REFERENCE:
+    if (entering) {
+      cmark_strbuf_puts(html, "<sup class=\"footnote-ref\"><a href=\"#fn");
+      cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
+      cmark_strbuf_puts(html, "\" id=\"fnref");
+      cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
+      cmark_strbuf_puts(html, "\">");
+      cmark_strbuf_put(html, node->as.literal.data, node->as.literal.len);
+      cmark_strbuf_puts(html, "</a></sup>");
+    }
+    break;
+
   default:
     assert(false);
     break;
   }
 
-  // cmark_strbuf_putc(html, 'x');
   return 1;
 }
 
-char *cmark_render_html(cmark_node *root, int options) {
+char *cmark_render_html(cmark_node *root, int options, cmark_llist *extensions) {
+  return cmark_render_html_with_mem(root, options, extensions, cmark_node_mem(root));
+}
+
+char *cmark_render_html_with_mem(cmark_node *root, int options, cmark_llist *extensions, cmark_mem *mem) {
   char *result;
-  cmark_strbuf html = CMARK_BUF_INIT(cmark_node_mem(root));
+  cmark_strbuf html = CMARK_BUF_INIT(mem);
   cmark_event_type ev_type;
   cmark_node *cur;
-  struct render_state state = {&html, NULL};
+  cmark_html_renderer renderer = {&html, NULL, NULL, 0, 0, NULL};
   cmark_iter *iter = cmark_iter_new(root);
+
+  for (; extensions; extensions = extensions->next)
+    if (((cmark_syntax_extension *) extensions->data)->html_filter_func)
+      renderer.filter_extensions = cmark_llist_append(
+          mem,
+          renderer.filter_extensions,
+          (cmark_syntax_extension *) extensions->data);
 
   while ((ev_type = cmark_iter_next(iter)) != CMARK_EVENT_DONE) {
     cur = cmark_iter_get_node(iter);
-    S_render_node(cur, ev_type, &state, options);
+    S_render_node(&renderer, cur, ev_type, options);
   }
+
+  if (renderer.footnote_ix) {
+    cmark_strbuf_puts(&html, "</ol>\n</section>\n");
+  }
+
   result = (char *)cmark_strbuf_detach(&html);
+
+  cmark_llist_free(mem, renderer.filter_extensions);
 
   cmark_iter_free(iter);
   return result;
