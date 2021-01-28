@@ -16,6 +16,7 @@ cmark_node_type CMARK_NODE_TABLE, CMARK_NODE_TABLE_ROW,
 
 typedef struct {
   uint16_t n_columns;
+  int paragraph_offset;
   cmark_llist *cells;
 } table_row;
 
@@ -113,22 +114,39 @@ static cmark_strbuf *unescape_pipes(cmark_mem *mem, unsigned char *string, bufsi
 static table_row *row_from_string(cmark_syntax_extension *self,
                                   cmark_parser *parser, unsigned char *string,
                                   int len) {
+  // Parses a single table row. It has the following form:
+  // `delim? table_cell (delim table_cell)* delim? newline`
+  // Note that cells are allowed to be empty.
+  //
+  // From the GitHub-flavored Markdown specification:
+  //
+  // > Each row consists of cells containing arbitrary text, in which inlines
+  // > are parsed, separated by pipes (|). A leading and trailing pipe is also
+  // > recommended for clarity of reading, and if there’s otherwise parsing
+  // > ambiguity.
+
   table_row *row = NULL;
   bufsize_t cell_matched = 1, pipe_matched = 1, offset;
+  int expect_more_cells = 1;
+  int row_end_offset = 0;
 
   row = (table_row *)parser->mem->calloc(1, sizeof(table_row));
   row->n_columns = 0;
   row->cells = NULL;
 
+  // Scan past the (optional) leading pipe.
   offset = scan_table_cell_end(string, len, 0);
 
   // Parse the cells of the row. Stop if we reach the end of the input, or if we
   // cannot detect any more cells.
-  while (offset < len && (cell_matched || pipe_matched)) {
+  while (offset < len && expect_more_cells) {
     cell_matched = scan_table_cell(string, len, offset);
     pipe_matched = scan_table_cell_end(string, len, offset + cell_matched);
 
     if (cell_matched || pipe_matched) {
+      // We are guaranteed to have a cell, since (1) either we found some
+      // content and cell_matched, or (2) we found an empty cell followed by a
+      // pipe.
       cmark_strbuf *cell_buf = unescape_pipes(parser->mem, string + offset,
           cell_matched);
       cmark_strbuf_trim(cell_buf);
@@ -137,23 +155,46 @@ static table_row *row_from_string(cmark_syntax_extension *self,
       cell->buf = cell_buf;
       cell->start_offset = offset;
       cell->end_offset = offset + cell_matched - 1;
+
       while (cell->start_offset > 0 && string[cell->start_offset - 1] != '|') {
         --cell->start_offset;
         ++cell->internal_offset;
       }
+
       row->n_columns += 1;
       row->cells = cmark_llist_append(parser->mem, row->cells, cell);
     }
 
     offset += cell_matched + pipe_matched;
 
-    if (!pipe_matched) {
-      pipe_matched = scan_table_row_end(string, len, offset);
-      offset += pipe_matched;
+    if (pipe_matched) {
+      expect_more_cells = 1;
+    } else {
+      // We've scanned the last cell. Check if we have reached the end of the row
+      row_end_offset = scan_table_row_end(string, len, offset);
+      offset += row_end_offset;
+
+      // If the end of the row is not the end of the input,
+      // the row is not a real row but potentially part of the paragraph
+      // preceding the table.
+      if (row_end_offset && offset != len) {
+        row->paragraph_offset = offset;
+
+        cmark_llist_free_full(parser->mem, row->cells, (cmark_free_func)free_table_cell);
+        row->cells = NULL;
+        row->n_columns = 0;
+
+        // Scan past the (optional) leading pipe.
+        offset += scan_table_cell_end(string, len, offset);
+
+        expect_more_cells = 1;
+      } else {
+        expect_more_cells = 0;
+      }
     }
   }
 
-  if (offset != len || !row->n_columns) {
+  if (offset != len || row->n_columns == 0) {
     free_table_row(parser->mem, row);
     row = NULL;
   }
@@ -161,12 +202,30 @@ static table_row *row_from_string(cmark_syntax_extension *self,
   return row;
 }
 
+static void try_inserting_table_header_paragraph(cmark_parser *parser,
+                                                 cmark_node *parent_container,
+                                                 unsigned char *parent_string,
+                                                 int paragraph_offset) {
+  cmark_node *paragraph;
+  cmark_strbuf *paragraph_content;
+
+  paragraph = cmark_node_new_with_mem(CMARK_NODE_PARAGRAPH, parser->mem);
+
+  paragraph_content = unescape_pipes(parser->mem, parent_string, paragraph_offset);
+  cmark_strbuf_trim(paragraph_content);
+  cmark_node_set_string_content(paragraph, (char *) paragraph_content->ptr);
+  cmark_strbuf_free(paragraph_content);
+  parser->mem->free(paragraph_content);
+
+  if (!cmark_node_insert_before(parent_container, paragraph)) {
+    parser->mem->free(paragraph);
+  }
+}
+
 static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
                                             cmark_parser *parser,
                                             cmark_node *parent_container,
                                             unsigned char *input, int len) {
-  bufsize_t matched =
-      scan_table_start(input, len, cmark_parser_get_first_nonspace(parser));
   cmark_node *table_header;
   table_row *header_row = NULL;
   table_row *marker_row = NULL;
@@ -174,41 +233,37 @@ static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
   const char *parent_string;
   uint16_t i;
 
-  if (!matched)
-    return parent_container;
-
-  parent_string = cmark_node_get_string_content(parent_container);
-
-  cmark_arena_push();
-
-  header_row = row_from_string(self, parser, (unsigned char *)parent_string,
-                               (int)strlen(parent_string));
-
-  if (!header_row) {
-    free_table_row(parser->mem, header_row);
-    cmark_arena_pop();
+  if (!scan_table_start(input, len, cmark_parser_get_first_nonspace(parser))) {
     return parent_container;
   }
 
+  // Since scan_table_start was successful, we must have a marker row.
   marker_row = row_from_string(self, parser,
                                input + cmark_parser_get_first_nonspace(parser),
                                len - cmark_parser_get_first_nonspace(parser));
-
   assert(marker_row);
 
-  if (header_row->n_columns != marker_row->n_columns) {
-    free_table_row(parser->mem, header_row);
+  cmark_arena_push();
+
+  // Check for a matching header row. We call `row_from_string` with the entire
+  // (potentially long) parent container as input, but this should be safe since
+  // `row_from_string` bails out early if it does not find a row.
+  parent_string = cmark_node_get_string_content(parent_container);
+  header_row = row_from_string(self, parser, (unsigned char *)parent_string,
+                               (int)strlen(parent_string));
+  if (!header_row || header_row->n_columns != marker_row->n_columns) {
     free_table_row(parser->mem, marker_row);
+    free_table_row(parser->mem, header_row);
     cmark_arena_pop();
     return parent_container;
   }
 
   if (cmark_arena_pop()) {
+    marker_row = row_from_string(
+        self, parser, input + cmark_parser_get_first_nonspace(parser),
+        len - cmark_parser_get_first_nonspace(parser));
     header_row = row_from_string(self, parser, (unsigned char *)parent_string,
                                  (int)strlen(parent_string));
-    marker_row = row_from_string(self, parser,
-                                 input + cmark_parser_get_first_nonspace(parser),
-                                 len - cmark_parser_get_first_nonspace(parser));
   }
 
   if (!cmark_node_set_type(parent_container, CMARK_NODE_TABLE)) {
@@ -217,10 +272,13 @@ static cmark_node *try_opening_table_header(cmark_syntax_extension *self,
     return parent_container;
   }
 
+  if (header_row->paragraph_offset) {
+    try_inserting_table_header_paragraph(parser, parent_container, (unsigned char *)parent_string,
+                                         header_row->paragraph_offset);
+  }
+
   cmark_node_set_syntax_extension(parent_container, self);
-
   parent_container->as.opaque = parser->mem->calloc(1, sizeof(node_table));
-
   set_n_table_columns(parent_container, header_row->n_columns);
 
   uint8_t *alignments =
