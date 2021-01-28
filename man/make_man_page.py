@@ -21,9 +21,9 @@ from ctypes import CDLL, c_char_p, c_long, c_void_p
 sysname = platform.system()
 
 if sysname == 'Darwin':
-    cmark = CDLL("build/src/libcmark-gfm.dylib")
+    cmark = CDLL("build/src/libcmark.dylib")
 else:
-    cmark = CDLL("build/src/libcmark-gfm.so")
+    cmark = CDLL("build/src/libcmark.so")
 
 parse_document = cmark.cmark_parse_document
 parse_document.restype = c_void_p
@@ -46,9 +46,9 @@ def md2man(text):
 comment_start_re = re.compile('^\/\*\* ?')
 comment_delim_re = re.compile('^[/ ]\** ?')
 comment_end_re = re.compile('^ \**\/')
-function_re = re.compile('^ *(?:CMARK_GFM_EXPORT\s+)?(?P<type>(?:const\s+)?\w+(?:\s*[*])?)\s*(?P<name>\w+)\s*\((?P<args>[^)]*)\)')
+function_re = re.compile('^ *(?:CMARK_EXPORT\s+)?(?P<type>(?:const\s+)?\w+(?:\s*[*])?)\s*(?P<name>\w+)\s*\((?P<args>[^)]*)\)')
 blank_re = re.compile('^\s*$')
-macro_re = re.compile('CMARK_GFM_EXPORT *')
+macro_re = re.compile('CMARK_EXPORT *')
 typedef_start_re = re.compile('typedef.*{$')
 typedef_end_re = re.compile('}')
 single_quote_re = re.compile("(?<!\w)'([^']+)'(?!\w)")
@@ -129,5 +129,5 @@ with open(sourcefile, 'r') as cmarkh:
             chunk = []
             mdlines.append('\n')
 
-sys.stdout.write('.TH cmark-gfm 3 "' + date.today().strftime('%B %d, %Y') + '" "LOCAL" "Library Functions Manual"\n')
+sys.stdout.write('.TH ' + os.path.basename(sourcefile).replace('.h','') + ' 3 "' + date.today().strftime('%B %d, %Y') + '" "LOCAL" "Library Functions Manual"\n')
 sys.stdout.write(''.join(mdlines))
