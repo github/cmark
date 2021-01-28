@@ -14,9 +14,8 @@ if (CMARK_SHARED OR CMARK_STATIC)
 endif()
 
 if (WIN32)
-  file(TO_NATIVE_PATH ${CMAKE_BINARY_DIR}/src WIN_SRC_DLL_DIR)
-  file(TO_NATIVE_PATH ${CMAKE_BINARY_DIR}/extensions WIN_EXTENSIONS_DLL_DIR)
-  set(NEWPATH "${WIN_SRC_DLL_DIR};${WIN_EXTENSIONS_DLL_DIR};$ENV{PATH}")
+  file(TO_NATIVE_PATH ${CMAKE_BINARY_DIR}/src WIN_DLL_DIR)
+  set(NEWPATH "${WIN_DLL_DIR};$ENV{PATH}")
   string(REPLACE ";" "\\;" NEWPATH "${NEWPATH}")
   set_tests_properties(api_test PROPERTIES ENVIRONMENT "PATH=${NEWPATH}")
   set(ROUNDTRIP "${CMAKE_CURRENT_SOURCE_DIR}/roundtrip.bat")
@@ -57,52 +56,19 @@ IF (PYTHONINTERP_FOUND)
   endif()
 
   add_test(spectest_executable
-    ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/spec_tests.py" "--no-normalize" "--spec" "${CMAKE_CURRENT_SOURCE_DIR}/spec.txt" "--program" "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark-gfm"
+    ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/spec_tests.py" "--no-normalize" "--spec" "${CMAKE_CURRENT_SOURCE_DIR}/spec.txt" "--program" "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark"
     )
 
   add_test(smartpuncttest_executable
-    ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/spec_tests.py" "--no-normalize" "--spec" "${CMAKE_CURRENT_SOURCE_DIR}/smart_punct.txt" "--program" "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark-gfm --smart"
-    )
-
-  add_test(extensions_executable
-    ${PYTHON_EXECUTABLE}
-    "${CMAKE_CURRENT_SOURCE_DIR}/spec_tests.py"
-    "--no-normalize"
-    "--spec" "${CMAKE_CURRENT_SOURCE_DIR}/extensions.txt"
-    "--program" "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark-gfm"
-    "--extensions" "table strikethrough autolink tagfilter footnotes tasklist"
-    )
-
-  add_test(roundtrip_extensions_executable
-    ${PYTHON_EXECUTABLE}
-    "${CMAKE_CURRENT_SOURCE_DIR}/roundtrip_tests.py"
-    "--spec" "${CMAKE_CURRENT_SOURCE_DIR}/extensions.txt"
-    "--program" "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark-gfm"
-    "--extensions" "table strikethrough autolink tagfilter footnotes tasklist"
-    )
-
-  add_test(option_table_prefer_style_attributes
-    ${PYTHON_EXECUTABLE}
-    "${CMAKE_CURRENT_SOURCE_DIR}/roundtrip_tests.py"
-    "--spec" "${CMAKE_CURRENT_SOURCE_DIR}/extensions-table-prefer-style-attributes.txt"
-    "--program" "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark-gfm --table-prefer-style-attributes"
-    "--extensions" "table strikethrough autolink tagfilter footnotes tasklist"
-    )
-
-  add_test(option_full_info_string
-    ${PYTHON_EXECUTABLE}
-    "${CMAKE_CURRENT_SOURCE_DIR}/roundtrip_tests.py"
-    "--spec" "${CMAKE_CURRENT_SOURCE_DIR}/extensions-full-info-string.txt"
-    "--program" "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark-gfm --full-info-string"
+    ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/spec_tests.py" "--no-normalize" "--spec" "${CMAKE_CURRENT_SOURCE_DIR}/smart_punct.txt" "--program" "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark --smart"
     )
 
   add_test(regressiontest_executable
     ${PYTHON_EXECUTABLE}
     "${CMAKE_CURRENT_SOURCE_DIR}/spec_tests.py" "--no-normalize" "--spec"
     "${CMAKE_CURRENT_SOURCE_DIR}/regression.txt" "--program"
-    "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark-gfm"
+    "${CMAKE_CURRENT_BINARY_DIR}/../src/cmark"
     )
-
 
 ELSE(PYTHONINTERP_FOUND)
 
