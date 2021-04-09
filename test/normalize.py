@@ -15,6 +15,15 @@ import sys
 import re
 import cgi
 
+try:
+    # cgi.escape was removed in Python 3.8.
+    html_escape = cgi.escape
+except AttributeError:
+    import html
+
+    html_escape = html.escape
+
+
 # Normalization code, adapted from
 # https://github.com/karlcow/markdown-testsuite/
 significant_attrs = ["alt", "href", "src", "title"]
@@ -66,7 +75,7 @@ class MyHTMLParser(HTMLParser):
                     self.output += ("=" + '"' +
                             urllib.quote(urllib.unquote(v), safe='/') + '"')
                 elif v != None:
-                    self.output += ("=" + '"' + cgi.escape(v,quote=True) + '"')
+                    self.output += ("=" + '"' + html_escape(v,quote=True) + '"')
         self.output += ">"
         self.last_tag = tag
         self.last = "starttag"
